@@ -58,7 +58,7 @@ function solveOne(string){
     return Math.max(...elvesCals)
 }
 
-function solveTwo(string){
+function solveOneBis(string){
     let elvesCarry = string.split('\n\n')
     let max = 0
     elvesCarry.forEach(carr => {
@@ -75,9 +75,10 @@ function solveTwo(string){
 (() => {
     const data = fs.readFileSync(__dirname + '/input.txt').toString();
     // console.log(solveOne(data));
-    // console.log(solveTwo(data));
+    // console.log(solveOneBis(data));
+    console.log(solveTwo(data));
 
-    assert.deepStrictEqual(solveOne(`
+    assert.deepStrictEqual(solveTwo(`
 1000
 2000
 3000
@@ -92,5 +93,28 @@ function solveTwo(string){
 9000
 
 10000
-`), 24000);
+`), 45000);
 })();
+
+
+// --- Part Two ---
+// By the time you calculate the answer to the Elves' question, they've already realized that the Elf carrying the most Calories of food might eventually run out of snacks.
+
+// To avoid this unacceptable situation, the Elves would instead like to know the total Calories carried by the top three Elves carrying the most Calories. That way, even if one of those Elves runs out of snacks, they still have two backups.
+
+// In the example above, the top three Elves are the fourth Elf (with 24000 Calories), then the third Elf (with 11000 Calories), then the fifth Elf (with 10000 Calories). The sum of the Calories carried by these three elves is 45000.
+
+// Find the top three Elves carrying the most Calories. How many Calories are those Elves carrying in total?
+
+// ANSWER : 205615
+
+function solveTwo(string){
+    let elvesCarry = string.split('\n\n')
+    let elvesCals = elvesCarry.map(carr => {
+        return carr.split('\n').reduce((acc, cur) => acc+ +cur, 0)
+    })
+
+    let topThree = elvesCals.sort((a, b) => b-a).slice(0, 3)
+
+    return topThree.reduce((acc, cur) => acc+cur, 0)
+}
