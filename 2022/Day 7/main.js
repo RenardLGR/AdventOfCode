@@ -351,7 +351,7 @@ function solveTwo(string, neededSpace = 30000000, totalSpace = 70000000){
 //=========================================================
 //Second attempt as the first one didn't work : recursive approach
 function solveOneBis(string){
-    //get an array of lines, remove $
+    //get an array of lines, remove $, we'll attach a read/unread value to keep track of read lines so we don't count files multiple times
     let lines = string.split("\n").map(line => {
         return [line.replace('$ ', ''), "unread"]
     })
@@ -362,7 +362,7 @@ function solveOneBis(string){
     getDirSize(lines)
 
     // console.log("lines:", lines);
-    console.log("dirSizes:", dirSizes);
+    // console.log("dirSizes:", dirSizes);
 
     let result = dirSizes.filter(([dirName, dirSize]) => dirSize<=100000).reduce((acc, [dirName, dirSize]) => acc+dirSize, 0)
     return result
@@ -407,7 +407,7 @@ function solveOneBis(string){
                 lines[i][1] = "read"
             }
         }
-        // push it to the final result, return the size of the sub directory, end the recursive calls
+        // push it to the final result, return the size of the sub directory, end the recursive calls, this happens at the end of the drilling, when we don't cd .. back up
         dirSizes.push([dirName, size])
         return size
     }
@@ -439,8 +439,90 @@ function solveOneBis(string){
 // 7214296 k`), 95437);
 
 //Puzzle input
-(() => {
-    const data = fs.readFileSync(__dirname + '/input.txt').toString();
-    console.log(solveOneBis(data))
-})() // 1611443
+// (() => {
+//     const data = fs.readFileSync(__dirname + '/input.txt').toString();
+//     console.log(solveOneBis(data))
+// })() // 1611443
+//CORRECT ANSWER
+
+function solveTwoBis(string, neededSpace = 30000000, totalSpace = 70000000){
+        //get an array of lines, remove $, we'll attach a read/unread value to keep track of read lines so we don't count files multiple times
+        let lines = string.split("\n").map(line => {
+            return [line.replace('$ ', ''), "unread"]
+        })
+        // console.log(lines);
+    
+        let dirSizes = []
+    
+        getDirSize(lines)
+    
+        // console.log("lines:", lines);
+        // console.log("dirSizes:", dirSizes);
+    
+        //sort decreasingly
+        dirSizes.sort( (a,b) => {
+            const [dirA, sizeA] = a
+            const [dirB, sizeB] = b
+            return sizeB - sizeA
+        } )
+        // console.log("dirSizes:", dirSizes);
+
+        const spaceUsed = dirSizes[0][1] // that would be the root '/'
+        const spaceAvailable = totalSpace - spaceUsed
+        const spaceToFree = neededSpace - spaceAvailable
+
+        for(let i=dirSizes.length-1 ; i>=0 ; i--){
+            if(dirSizes[i][1] >= spaceToFree) return dirSizes[i][1]
+        }
+    
+        function getDirSize(lines){
+            let size = 0
+            let dirName = ''
+            for(let i=0 ; i<lines.length ; i++){
+                let line = lines[i][0]
+                if(lines[i][1] === "read"){
+                    //if line is read skip
+                    continue
+                }
+    
+                //if I have a cd + ls combo, initialize my dirName
+                if(line.slice(0,2) === 'cd' && lines[i+1][0] === 'ls'){
+                    dirName = line.slice(3)
+                    lines[i][1] = "read"
+                }else if(line === "ls"){
+                    lines[i][1] = "read"
+                }else if(line.slice(0,3) === 'dir'){
+                    //if I find a dir, go to the cd dir line and recall recursively the function from there
+                    let newDirName = line.slice(4)
+                    lines[i][1] = "read"
+                    for(let j=i ; j<lines.length ; j++){
+                        if(lines[j][0] === `cd ${newDirName}`){
+                            let newDirSize = getDirSize(lines.slice(j)) //once a cd .. is found, this will return the size of the sub directory
+                            lines[j][1] = "read"
+                            // add the size of the sub directory to the size of the current directory
+                            size += newDirSize
+                            break
+                        }
+                    }
+                }else if(line === "cd .."){
+                    //if cd .. we are done with this directory, push it to the final result, return the size of the sub directory
+                    dirSizes.push([dirName, size])
+                    lines[i][1] = "read"
+                    return size
+                }else{
+                    // add size of files
+                    size += Number(line.split(' ')[0])
+                    lines[i][1] = "read"
+                }
+            }
+            // push it to the final result, return the size of the sub directory, end the recursive calls, this happens at the end of the drilling, when we don't cd .. back up
+            dirSizes.push([dirName, size])
+            return size
+        }
+}
+
+// (() => {
+//     const data = fs.readFileSync(__dirname + '/input.txt').toString();
+//     console.log(solveTwoBis(data))
+// })() // 2086088
 //CORRECT ANSWER
