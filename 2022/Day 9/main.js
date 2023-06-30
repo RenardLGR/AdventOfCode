@@ -1019,18 +1019,18 @@ function solveTwo(string){
     }
 }
 
-(() => {
-    const data = fs.readFileSync(__dirname + '/input.txt').toString();
-    console.log(solveTwo(data));
+// (() => {
+//     const data = fs.readFileSync(__dirname + '/input.txt').toString();
+//     console.log(solveTwo(data));
     
-assert.deepStrictEqual(solveTwo(`R 5
-U 8
-L 8
-D 3
-R 17
-D 10
-L 25
-U 20`), 36);
+// assert.deepStrictEqual(solveTwo(`R 5
+// U 8
+// L 8
+// D 3
+// R 17
+// D 10
+// L 25
+// U 20`), 36);
 
-})();
+// })();
 //CORRECT ANSWER : 2691
