@@ -231,5 +231,53 @@ function solveOne(string){
 // })();
 
 function solveTwo(string){
-    
+    const program = string.split('\n').map(instruction => instruction.replace('\r', ''))
+    let registerX = 1
+    let cycle = 1
+
+    let res = Array.from({length:6}, (line) => Array(40).fill('.'))
+
+    program.forEach(instruction => {
+        if(instruction === 'noop'){
+            draw()
+            cycle++
+        }else{
+            const val = Number(instruction.slice(4))
+            draw()
+            cycle++
+            draw()
+            cycle++
+            registerX += val
+        }
+    })
+
+    res = res.map(line => line.join('')).join('\n')
+    console.log(res);
+    return res
+
+    function draw(){
+        let row = Math.floor((cycle-1) / 40)
+        let col = (cycle-1) % 40
+        let spritePosition = [registerX%40 -1, registerX%40, registerX%40 +1]
+        if(spritePosition.includes((cycle-1) % 40)){
+            res[row][col] = '#'
+        }
+    }
 }
+
+(() => {
+//     const example = fs.readFileSync(__dirname + '/example.txt').toString();
+//     const resExample = solveTwo(example)
+//     assert.deepStrictEqual(resExample,
+// `##..##..##..##..##..##..##..##..##..##..
+// ###...###...###...###...###...###...###.
+// ####....####....####....####....####....
+// #####.....#####.....#####.....#####.....
+// ######......######......######......####
+// #######.......#######.......#######.....`);
+
+    const data = fs.readFileSync(__dirname + '/input.txt').toString();
+    console.log(solveTwo(data));
+})();
+
+// CORRECT ANSWER : RLEZFLGE
