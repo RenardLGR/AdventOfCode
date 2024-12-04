@@ -7,8 +7,8 @@ const assert = require("assert");
         const example = fs.readFileSync(__dirname + "/example.txt").toString()
         const input = fs.readFileSync(__dirname + "/input.txt").toString()
         // console.log(input);
-        assert.deepStrictEqual(solveExample(example), "bonjour")
-        // assert.deepStrictEqual(solveOne(input), "bonjour")
+        // assert.deepStrictEqual(solveExample(example), "bonjour")
+        assert.deepStrictEqual(solveOne(input), "bonjour")
         // assert.deepStrictEqual(solveTwoExample(example), "bonjour")
         // assert.deepStrictEqual(solveTwo(input), "bonjour")
     } catch (error) {
@@ -16,16 +16,28 @@ const assert = require("assert");
     }
 })()
 
-// ============================ PART I ============================
 function solveExample(input){
+    input = input.replaceAll("\r", "")
 
+    let lines = input.split("\n")
+    if(lines[lines.length-1] === ""){
+        lines.pop()
+    }
+    let matrix = lines.map(l => l.split(""))
 }
 
 function solveOne(input){
+    input = input.replaceAll("\r", "")
+
+    let lines = input.split("\n")
+    if(lines[lines.length-1] === ""){
+        lines.pop()
+    }
+    let matrix = lines.map(l => l.split(""))
+    console.log(matrix);
     
 }
 
-// ============================ PART II ============================
 function solveTwoExample(input){
 
 }

@@ -110,6 +110,8 @@ function solveTwo(input){
     return solveTwoExample(input)
 }
 
+
+//doesnt work
 function solveTwoBis(input){
     input = input.replaceAll("\r", "")
 
