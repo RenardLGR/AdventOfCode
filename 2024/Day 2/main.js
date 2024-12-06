@@ -1,7 +1,6 @@
 const fs = require("fs");
 const assert = require("assert");
 
-
 (() => {
     try {
         const example = fs.readFileSync(__dirname + "/example.txt").toString()
@@ -9,10 +8,9 @@ const assert = require("assert");
         // console.log(input);
         // assert.deepStrictEqual(solveExample(example), 2)
         // assert.deepStrictEqual(solveOne(input), 686) //686
-        console.log(solveOneER(input))
         // assert.deepStrictEqual(solveTwoExample(example), 4)
         // assert.deepStrictEqual(solveTwo(input), 717) //717
-        // assert.deepStrictEqual(solveTwoBis(input), 717) //717
+        assert.deepStrictEqual(solveTwoBis(input), 717) //717
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
@@ -111,8 +109,17 @@ function solveTwo(input){
 }
 
 
-//doesnt work
 function solveTwoBis(input){
+    // I thought about doing a loop over l, when an error is found, raise a flag errorFound = true, slice of the the error and creating a new array, newLine = l.slice(); newLine.splice(i, 1); i-- and keep on going with the loop until we find another error in which case the line is definitely dropped but if no other error is found its ok.
+    // The issue that arises is we can't ever exclude the 0th element.
+    // We could deal with that edge case but it seems complicated
+    // Example : [84, 86, 85, 82, 81, 79, 76, 75]
+    // I thought about doing two loops, starting at head and tail, each going in its direction and stopping when an error is found, if they stop at the same error we could pinpoint the error and remove it. But again we have issue if the error is at an extremity.
+
+    // We could also count how many errors there is, reset isIncreasing accordingly starting from i, the index of the error
+
+    // In conclusion, finding an error gives the culprit with a +1 or -2 index. We will try a line with each of the suspect out and maybe get a correct line.
+
     input = input.replaceAll("\r", "")
 
     let lines = input.split("\n")
@@ -124,56 +131,47 @@ function solveTwoBis(input){
     
     let res = 0 //number of reports that are safe
     lines.forEach((l => {
-        // I thought about doing a loop over l, when an error is found, raise a flag errorFound = true, slice of the the error and creating a new array, newLine = l.slice(); newLine.splice(i, 1); i-- and keep on going with the loop until we find another error in which case the line is definitely dropped but if no other error is found its ok.
-        // The issue that arises is we can't ever exclude the 0th element.
-        // We could deal with that edge case but it seems complicated
-
-        // We could also count how many errors there is, reset isIncreasing accordingly starting from i, the index of the error
-
-
-        let isHeadIncreasing = l[1] - l[0] > 0
-        let isTailIncreasing = l[l.length-1] - l[l.length-2] > 0 // meaning, reading the tail's elements from left to right, the elements are increasing
-        let head = 1
-        let tail = l.length-2
-        let headFlagIndx = undefined
-        let tailFlagIndx = undefined
-        for(let i=0 ; i<l.length-1 ; i++){
-            if(isHeadIncreasing && (l[head] - l[head-1] <= 0 || l[head] - l[head-1] > 3)){
-                //if increasing we can only accept a difference of 1, 2 or 3
-                if(headFlagIndx === undefined){
-                    headFlagIndx = head
-                }
-            }
-            if(!isHeadIncreasing && (l[head] - l[head-1] <= -4 || l[head] - l[head-1] > -1)){
-                //if increasing we can only accept a difference of -3, -2 or -1
-                if(headFlagIndx === undefined){
-                    headFlagIndx = head
-                }
-            }
-            if(isTailIncreasing && (l[tail+1] - l[tail] <= 0 || l[tail+1] - l[tail] > 3)){
-                //if increasing we can only accept a difference of 1, 2 or 3
-                if(headFlagIndx === undefined){
-                    headFlagIndx = head
-                }
-            }
-            if(!isTailIncreasing && (l[tail+1] - l[tail] <= -4 || l[tail+1] - l[tail] > -1)){
-                //if increasing we can only accept a difference of -3, -2 or -1
-                if(tailFlagIndx === undefined){
-                    tailFlagIndx = tail
-                }
-            }
-        }
-        // if the error was at the same place or they are both undefined, we have a safe report
-        if(headFlagIndx === tailFlagIndx){
-            console.log("Is it really safe, pls check");
-            console.log(l);
-            
-            
+        let errorIdx = errorFoundAt(l)
+        if(errorIdx === -1){
             res++
+            return
+        }else{
+            let tryStart = Math.max(0, errorIdx-2)
+            let tryEnd = Math.min(errorIdx+1, l.length-1)
+            for(let tryWithout=tryStart ; tryWithout<=tryEnd ; tryWithout++){
+                let newLine = l.slice()
+                newLine.splice(tryWithout, 1)
+                if(errorFoundAt(newLine) === -1){
+                    res++
+                    return
+                }
+            }
         }
     }))
 
-    // console.log(res);
-    
+    console.log(res)
+
     return res
+
+
+    // HELPER
+    // Following the rules of Part I, return where the error was found at, if no error was found, return -1 which means the line is safe
+    // Array<Number> : Boolean
+    function errorFoundAt(l){
+        let error = -1
+        let isIncreasing = l[1] - l[0] > 0
+        for(let i=1 ; i<l.length ; i++){
+            if(isIncreasing && (l[i] - l[i-1] <= 0 || l[i] - l[i-1] > 3)){
+                //if increasing we can only accept a difference of 1, 2 or 3
+                error = i
+                break
+            }
+            if(!isIncreasing && (l[i] - l[i-1] <= -4 || l[i] - l[i-1] > -1)){
+                //if increasing we can only accept a difference of -3, -2 or -1
+                error = i
+                break
+            }
+        }
+        return error
+    }
 }

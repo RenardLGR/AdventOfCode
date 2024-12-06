@@ -9,9 +9,11 @@ const assert = require("assert");
         // assert.deepStrictEqual(solveOne(example), 18)
         // assert.deepStrictEqual(solveOne(input), 2397) // 2397
         // assert.deepStrictEqual(solveOneBis(input), 2397) // 2397
-        assert.deepStrictEqual(solveOneTer(input), 2397) // 2397
+        // assert.deepStrictEqual(solveOneTer(input), 2397) // 2397
+        // assert.deepStrictEqual(solveOneQuater(input), 2397) // 2397
         // assert.deepStrictEqual(solveTwo(example), 9)
         // assert.deepStrictEqual(solveTwo(input), 1824) // 1824
+        assert.deepStrictEqual(solveTwoBis(input), 1824) // 1824
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
@@ -239,20 +241,21 @@ function solveOneTer(input){
 // We have M > H > V = M > V > H
 
 // |a b c d|           |d c b a|            |d h l p|       V > T
-// |e f g h|   =>      |h g f e|    =>      |c g k o|     we have an
-// |i j k l|vertical   |l k j i|  transpose |b f j n|    anticlockwise
-// |m n o p| mirror    |p o n m|            |a e i m|   rotation of 90°
+// |e f g h|   =>      |h g f e|    =>      |c g k o|     we have an        (same as rotating)
+// |i j k l|vertical   |l k j i|  transpose |b f j n|    anticlockwise      clockwise 3 times
+// |m n o p| mirror    |p o n m|            |a e i m|   rotation of 90°         i.e. 270°)
 
-//                     |m n o p|            |m i e a|       H > T
-//             =>      |i j k l|    =>      |n j f b|     we have a
-//         horizontal  |e f g h|  transpose |o k g c|     clockwise
-//           mirror    |a b c d|            |p l h d|   rotation of 90°
+//                     |m n o p|            |m i e a|       H > T                       |p o n m|
+//             =>      |i j k l|    =>      |n j f b|     we have a             =>      |l k j i|
+//         horizontal  |e f g h|  transpose |o k g c|     clockwise         rotate 90°  |h g f e|
+//           mirror    |a b c d|            |p l h d|   rotation of 90°       again     |d c b a|
 
 //                     |a e i m|
 //             =>      |b f j n|
 //         transpose   |c g k o|
 //                     |d h l p|
-// This would easily take care of XMAS and SAMX in vertical and horizontal directions
+
+// Now we only have to write a function that reads XMAS on a line and on a diagonal and just rotate three times (90°, 180° and 270°)
 
 function solveOneQuater(input){
     input = input.replaceAll("\r", "")
@@ -266,10 +269,48 @@ function solveOneQuater(input){
     
     const maxRow = matrix.length // number of rows
     const maxCol = matrix[0].length // number of cols
+    const target = "XMAS"
 
+    let res = 0
+    for(let rotation=0 ; rotation<4 ; rotation++){
+        for(let row=0 ; row<maxRow ; row++){
+            for(let col=0 ; col<maxCol ; col++){
+                if(matrix[row][col] === "X"){
+                    if(checkEast(row, col)) res++
+                    if(checkNorthEast(row, col)) res++
+                }
+            }
+        }
+        matrix = rotateCWmatrix(matrix)
+    }
 
+    console.log(res)
+
+    return res
 
     //HELPER
+    // (Number, Number) : Boolean
+    // Check if I have "XMAS" reading East
+    function checkEast(row, col){
+        if(col > maxCol-target.length){
+            return false
+        }
+        return matrix[row][col] === "X" && matrix[row][col+1] === "M" && matrix[row][col+2] === "A" && matrix[row][col+3] === "S"
+    }
+
+    function checkNorthEast(row, col){
+        if(row < target.length-1 || col > maxCol-target.length){
+            return false
+        }
+        return matrix[row][col] === "X" && matrix[row-1][col+1] === "M" && matrix[row-2][col+2] === "A" && matrix[row-3][col+3] === "S"
+    }
+
+    // Array<Array<Number>> : Array<Array<Number>>
+    // From a matrix, return the matrix rotated clockwise 90° 
+    function rotateCWmatrix(matrix){
+        return transposeMirror(horizontalMirror(matrix))
+    }
+
     // Array<Array<Number>> : Array<Array<Number>>
     // From a matrix, return the vertical mirror matrix 
     function verticalMirror(matrix){
@@ -281,7 +322,6 @@ function solveOneQuater(input){
         }
         return res
     }
-    
 
     // Array<Array<Number>> : Array<Array<Number>>
     // From a matrix, return the horizontal mirror matrix 
@@ -331,6 +371,8 @@ function solveTwo(input){
     for(let row=0 ; row<maxRow ; row++){
         for(let col=0 ; col<maxCol ; col++){
             if(matrix[row][col] === "A"){
+                // both diagonals need to be true for a X-MAS
+                // if(checkNorthWestSouthEastDiagonal(row, col) && checkNorthEastSouthWestDiagonal(row, col)) res++
                 if(collectChecks(row, col).filter(bool => bool).length === 2){
                     res++
                 }
@@ -363,4 +405,33 @@ function solveTwo(input){
     function collectChecks(row, col){
         return [checkNorthWestSouthEastDiagonal(row, col), checkNorthEastSouthWestDiagonal(row, col)]
     }
+}
+
+function solveTwoBis(input){
+    input = input.replaceAll("\r", "")
+
+    let lines = input.split("\n")
+    if(lines[lines.length-1] === ""){
+        lines.pop()
+    }
+    let matrix = lines.map(l => l.split(""))
+    // console.log(matrix);
+    
+    const maxRow = matrix.length // number of rows
+    const maxCol = matrix[0].length // number of cols
+
+    let res = 0
+    //An "A" on a side will never lead to a X-MAS, other "A"s can.
+    for(let row=1 ; row<maxRow-1 ; row++){
+        for(let col=1 ; col<maxCol-1 ; col++){
+            if(matrix[row][col] === "A"){
+                let isDiag1Correct = (matrix[row-1][col-1]==="S" && matrix[row+1][col+1]==="M") || (matrix[row-1][col-1]==="M" && matrix[row+1][col+1]==="S")
+                let isDiag2Correct = (matrix[row-1][col+1]==="S" && matrix[row+1][col-1]==="M") || (matrix[row-1][col+1]==="M" && matrix[row+1][col-1]==="S")
+                if(isDiag1Correct && isDiag2Correct) res++
+            }
+        }
+    }
+    console.log(res);
+    
+    return res
 }
