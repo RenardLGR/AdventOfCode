@@ -24,7 +24,7 @@ const assert = require("assert");
 // Let A and B be logical propositions, with De Morgan's laws : 
 // ¬(A ∧ B) ≡ (¬A ∨ ¬B) i.e Not (A and B) is the same as (Not A) or (Not B)
 // ¬(A ∨ B) ≡ (¬A ∧ ¬B) i.e Not (A or B) is the same as (Not A) and (Not B)
-// We have the generalization (1) ∀xP(x)≡¬(∃x¬P(x)) (2)  i.e All elements are true is the same as None of the elements are false.
+// We have the generalization (1) ∀xP(x) ≡ ¬(∃x¬P(x)) (2)  i.e All elements are true is the same as None of the elements are false.
 // https://en.wikipedia.org/wiki/De_Morgan%27s_laws#Extension_to_predicate_and_modal_logic
 
 // In other terms, checking "All pages are in the right spot" (1) is like checking "No page is in the wrong spot" (2) or "A page in the wrong spot doesn't exist" (2)
