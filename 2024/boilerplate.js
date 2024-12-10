@@ -18,7 +18,12 @@ const assert = require("assert");
 
 // ============================ PART I ============================
 function solveExample(input){
+    input = input.replaceAll("\r", "")
 
+    let lines = input.split("\n")
+    if(lines[lines.length-1] === ""){
+        lines.pop()
+    }
 }
 
 function solveOne(input){
@@ -27,7 +32,12 @@ function solveOne(input){
 
 // ============================ PART II ============================
 function solveTwoExample(input){
+    input = input.replaceAll("\r", "")
 
+    let lines = input.split("\n")
+    if(lines[lines.length-1] === ""){
+        lines.pop()
+    }
 }
 
 function solveTwo(input){
