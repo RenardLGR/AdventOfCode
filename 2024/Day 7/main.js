@@ -125,7 +125,8 @@ function solveTwo(input){
     equations.forEach(eq => {
         let target = eq.result
         let operands = eq.operands
-        if(isEquationPossibleTwo(target, operands)) res += target
+        // if(isEquationPossibleTwo(target, operands)) res += target
+        if(isEquationPossibleTwoBis(target, operands)) res += target
     })
 
     console.log(res)
@@ -161,3 +162,30 @@ function isEquationPossibleTwo(target, operands){
 // console.log(isEquationPossibleTwo(292, [11, 6, 16, 20])) // ["+", "*", "+"]
 // console.log(isEquationPossibleTwo(7290, [6, 8, 6, 15])) // ["*", "||", "*"]
 // console.log(isEquationPossibleTwo(192, [17, 8, 14])) // ["||", "+"]
+
+// (target: Number, operands: Array<Number>) : Boolean
+// Check if an equation is possible with the operators "+" or "*" or "||" and the given operands
+function isEquationPossibleTwoBis(target, operands){
+    // We can't have current initialized to 0 as it will bug for multiplication.
+    // We can't have current initialized to 1 as it will bug for addition.
+    let start = operands[0]
+
+    return solve(start, [], 1)
+
+    function solve(current, inProgress, operandIdx){
+        // current can only increase
+        if(current > target) return false
+        if(operandIdx === operands.length && current === target){
+            return inProgress
+        }
+        if(operandIdx === operands.length) return false
+
+        let trying = operands[operandIdx]
+        let pipeOperand = Number(""+current+trying)
+        return solve(current*trying, [...inProgress, "*"], operandIdx+1) || solve(current+trying, [...inProgress, "+"], operandIdx+1) || solve(pipeOperand, [...inProgress, "||"], operandIdx+1)
+    }
+}
+
+// console.log(isEquationPossibleTwoBis(292, [11, 6, 16, 20])) // ["+", "*", "+"]
+// console.log(isEquationPossibleTwoBis(7290, [6, 8, 6, 15])) // ["*", "||", "*"]
+// console.log(isEquationPossibleTwoBis(192, [17, 8, 14])) // ["||", "+"]

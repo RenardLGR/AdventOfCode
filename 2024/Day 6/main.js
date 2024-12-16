@@ -17,6 +17,7 @@ const assert = require("assert");
 })()
 
 // ============================ PART I ============================
+// Just simulate the path and count.
 function solveOne(input){
     input = input.replaceAll("\r", "")
 
