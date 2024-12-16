@@ -258,7 +258,7 @@ function solveTwoBis(input){
             }
             if((b in cleanOrders) && cleanOrders[b].includes(a)){
                 // a should be before b
-                return 
+                return 1
             }
             return 0
         })
@@ -336,23 +336,56 @@ function merge(left, right, cleanOrders){
         let l = left[0]
         let r = right[0]
 
-        // if there is no rule on r or l, their order doesn't matter
-        if(!(l in cleanOrders) && !(r in cleanOrders)){
-            res.push(l)
-            res.push(r)
-        }
+
+        //one of the two will always be true
+
         //push r : r is before l
-        else if((r in cleanOrders) && cleanOrders[r].includes(l)){
+        if((r in cleanOrders) && cleanOrders[r].includes(l)){
             res.push(r)
             right.shift()
         }
         //push l : l is before r
-        else if((l in cleanOrders) && cleanOrders[l].includes(r)){
+        if((l in cleanOrders) && cleanOrders[l].includes(r)){
             res.push(l)
             left.shift()
         }
-        else{
-            //It doesn't go there
-        }
+
     }
+}
+
+
+// It turns out you can just count how many times a number appears in the cleanOrders values. The more it appears, the more it is towards the end.
+// The input is generous enough so we don't have missing information on a page.
+function solveTwoQuater(input){
+    let [rawOrders, rawUpdates] = input.split("\n\n")
+    
+    let cleanOrders = rawOrders.split("\n").reduce((acc, cur) => {
+        let [before, after] = cur.split("|")
+        acc[before] = (acc[before] || []).concat(after)
+        return acc
+    }, {})
+
+    let cleanUpdates = rawUpdates.split("\n")
+    if(cleanUpdates[cleanUpdates.length-1] === ""){
+        cleanUpdates.pop()
+    }
+    cleanUpdates = cleanUpdates.map(l => l.split(","))
+
+    let res = 0
+    cleanUpdates.forEach(update => {
+        let sorted = update.slice().sort((a,b) => {
+            let aFreq = Object.keys(cleanOrders).filter(k => cleanOrders[k].includes(a)).length
+            let bFreq = Object.keys(cleanOrders).filter(k => cleanOrders[k].includes(b)).length
+            
+            return aFreq - bFreq
+        })
+        
+        //check if update and sorted are the same, if so we had a correctly ordered update
+        if(!update.every((e,i) => e === sorted[i])){
+            let middlePage = sorted[Math.floor(sorted.length/2)]
+            res += Number(middlePage)
+        }
+    })
+
+    return res
 }

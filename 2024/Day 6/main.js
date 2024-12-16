@@ -77,6 +77,53 @@ function solveOne(input){
     return res
 }
 // ============================ PART II ============================
+// The guard is stuck if and only if it returns to a visited position with the same direction.
+
+// Proof :
+
+// If revisiting position and direction implies an infinite loop:
+// Assume the guard revisits a state (p,d), where p is the position and d is the direction.
+// By determinism, the guard will follow the same sequence of moves starting from (p,d).
+// Since it reached (p,d) before and is now back at (p,d), the guard will keep repeating the cycle of movements indefinitely.
+// Therefore, revisiting (p,d) guarantees an infinite loop.
+
+// If the guard is in an infinite loop, it must revisit a position and direction:
+// Assume the guard enters an infinite loop.
+// Since the guard is deterministic and operates within a finite space (positions and directions), the Pigeonhole Principle guarantees that the guard must eventually repeat a state (p,d).
+// Repeating (p,d) means the guard has revisited the same position and direction.
+
+// Conclusion : Revisiting a position with the same direction is both a necessary and sufficient condition for an infinite loop for deterministic guard in a finite state space.
+// ___________________________________________________________________
+// Mathematically formalized :
+// The guard is in an infinite loop ⟺ ∃s∈S such that s is visited more than once.
+
+// Let P a finite set of positions.
+// Let D a finite set of directions.
+// Let a finite state space S = P x D, where P x D is the cartesian product of P and D. It is the set of all ordered pairs (p, d) with p ∈ P and d ∈ D.
+// A state s ∈ S is defined as s = (p,d), where p ∈ P is the current position and d ∈ D is the current direction.
+// The guard's movement is defined by a deterministic function:
+// f : S → S (Both the domain and codomain are S)
+// f(s)=f(p,d) gives the next state of the guard.
+
+// Proof :
+
+// If the guard revisits a state s, it is in a infinite loop:
+// Assume the guard revisits a state s_k at a later step s_m with m>k such that :
+// s_k = s_m
+// Since the guard is deterministic, f will produce the same output for the same input. Therefore :
+// f(s_k) = f(s_m) = s_k+1 = s_m+1 and
+// s_k+2 = s_m+2 and so on...
+// This implies the sequence of states from s_k to s_m will repeat indefinitely :
+// s_k, s_k+1, ... s_m-1, s_k, s_k+1, ...
+// Thus the guard is in an infinite loop.
+
+// If the guard is in an infinite loop, it revisits a state s:
+// Assume the automaton is in an infinite loop. This means the sequence of states (s_0, s_1, ...) repeats indefinitely.
+// Since S is finite, the Pigeonhole Principle ensures that some state s_k ∈ S must be visited more than once.
+// Therefore, the guard revisits a state s_k at least twice, and the sequence enters a cycle.
+
+// Conclusion : The guard is in an infinite loop ⟺ ∃s∈S such that s is visited more than once.
+
 function solveTwo(input){
     input = input.replaceAll("\r", "")
 
@@ -114,7 +161,7 @@ function solveTwo(input){
 // Given a new map with a newly added obstacle, returns a Boolean if the guard is stuck
 function isGuardStuck(matrix){
     //Similar algorithm than before, but we now track the direction he visited a cell with.
-    //We will run the guard's path, he the guard walks on a visited place with the same direction as before, he is indeed in a loop
+    //We will run the guard's path, if the guard walks on a visited place with the same direction as before, he is indeed in a loop
     let maxRow = matrix.length // number of rows
     let maxCol = matrix[0].length // number of cols
     
