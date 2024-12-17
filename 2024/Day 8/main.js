@@ -29,6 +29,10 @@ const assert = require("assert");
 
 // We will parse the input so we can have a data structure that allow us to easily have every pair of antennas of the same frequency.
 // From there extract the vector between this pair. Find their respective antinodes and check if they meet the requirements. Count them.
+
+// As a side note, given a set of size s of distinct elements, there are s choose 2 different pairs, C(n, k) = C(s, 2). Which compute to (! is the factorial sign) :
+// C(n, k) = n! / k!(n-k)!   i.e    C(s, 2) = s! / 2!(s-2)! = s(s-1)(s-2)! / 2(s-2)! = s(s-1) / 2
+
 function solveOne(input){
     // Step 1 : antennasFreqs will be the data structure used to extract every pair of antenna of the same frequency
     // Step 2 : double loop to find pairs and antinodes
