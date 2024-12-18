@@ -8,9 +8,9 @@ const assert = require("assert");
         const input = fs.readFileSync(__dirname + "/input.txt").toString()
         // console.log(input);
         // assert.deepStrictEqual(solveOne(example), 1928)
-        assert.deepStrictEqual(solveOne(input), 6332189866718) // 6332189866718
-        // assert.deepStrictEqual(solveTwoExample(example), "bonjour")
-        // assert.deepStrictEqual(solveTwo(input), "bonjour")
+        // assert.deepStrictEqual(solveOne(input), 6332189866718) // 6332189866718
+        // assert.deepStrictEqual(solveTwo(example), 2858)
+        assert.deepStrictEqual(solveTwo(input), 6353648390778) // 6353648390778
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
@@ -46,7 +46,7 @@ function solveOne(input){
     input = input.trim()
     
     // Step 1
-    // blocks is the block representation of the input
+    // blocks is the block representation of the input, IDs are Numbers, free spaces are '.' Strings
     let blocks = []
     input.split("").forEach((size, idx) => {
         //file
@@ -91,15 +91,89 @@ function solveOne(input){
 }
 
 // ============================ PART II ============================
-function solveTwoExample(input){
-    input = input.replaceAll("\r", "")
-
-    let lines = input.split("\n")
-    if(lines[lines.length-1] === ""){
-        lines.pop()
-    }
-}
-
+// Step 1 is the same
+// Step 2 asks us to move, starting from the right, blocks with the same ID in one go to the leftest free space blocks big enough to receive it.
+// Using only indices and for and while loops, we will do these transfers.
 function solveTwo(input){
+    input = input.trim()
     
+    // Step 1
+    // blocks is the block representation of the input
+    let blocks = []
+    input.split("").forEach((size, idx) => {
+        //file
+        if(idx%2 === 0){
+            let id = idx/2
+            for(let i=0 ; i<Number(size) ; i++){
+                blocks.push(id)
+            }
+        }
+        // free space
+        else{
+            for(let i=0 ; i<Number(size) ; i++){
+                blocks.push(".")
+            }
+        }
+    })
+
+    // Step 2
+    // This is pretty much separated into two steps. First, gather the files blocks, then look for free space blocks.
+
+    let minID = Infinity //we don't want to move IDs we already moved 
+    let tail = blocks.length-1 //pointer on the files we want to move
+    while(minID > 0){
+        //Step 2.1 Gather the files blocks
+        //move tail to the first file possible
+        while(blocks[tail] === ".") tail--
+        //once we get to a file, get his ID, get its length (size in blocks) ; if the ID is an already seen ID, skip it
+        let id = blocks[tail]
+        if(id > minID){
+            tail--
+            continue
+        }
+        let startFile = tail //represents the starting index of these files blocks
+        while(blocks[startFile] === id){
+            startFile--
+        }
+        startFile++ //cancel the step that got us out of the loop
+        let fileLength = tail - startFile + 1
+
+        //Step 2.2 Gather the free space blocks
+        // Now we search from the beginning of the earliest (or leftest) free space blocks big enough for the length found above.
+        // If such gap exists, operate the change, otherwise move to the next ID.
+        for(let i=0 ; i<startFile ; i++){
+            // When free space blocks are found, get its length
+            if(blocks[i] === '.'){
+                let endSpace = i
+                while(blocks[endSpace] === '.'){
+                    endSpace++
+                }
+                endSpace-- //cancel the step that got us out of the loop
+                let spaceLength = endSpace - i + 1
+
+                // If the space found is big enough, operate the change and move on
+                if(spaceLength >= fileLength){
+                    for(let j=0 ; j<fileLength ; j++){
+                        blocks[i + j] = id
+                        blocks[startFile + j] = '.'
+                    }
+                    break
+                }
+            }
+            // keep on searching free space blocks...
+        }
+        
+        //no matter what happened previously, update stuff
+        minID = id
+        tail = startFile - 1
+    }
+
+    // console.log(blocks);
+
+    //The result is the sum of blocks[i]*i for all blocks[i] not a free space
+    let res = blocks.reduce((acc, curr, idx) => curr !== "." ? acc + curr*idx : acc , 0)
+
+    console.log(res);
+
+    return res
 }

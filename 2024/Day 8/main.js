@@ -120,8 +120,8 @@ function solveTwo(input){
 
     let matrix = lines.map(l => [...l])
 
-    let maxRow = matrix.length //12
-    let maxCol = matrix[0].length //12
+    let maxRow = matrix.length //50
+    let maxCol = matrix[0].length //50
     
 
     // antennasFreqs will be an Object containing as keys the frequency and as values, an Array of positions of said antennas with said keys. Example :
@@ -178,8 +178,42 @@ function solveTwo(input){
         }
     }
 
+    // let res = antinodesMatrix.reduce((acc, line) => acc + line.reduce((acc, curr) => curr ? acc + 1 : acc , 0) , 0)
+
+    // function reducer(acc, cur){
+    //     if(Array.isArray(cur)){
+    //         return acc + cur.reduce(reducer, 0)
+    //     }else{
+    //         return acc + cur
+    //     }
+    // }
+    // let res = antinodesMatrix.reduce(reducer, 0)
+
+    // let res = antinodesMatrix.reduce(function reducer(acc, cur){return Array.isArray(cur) ? acc + cur.reduce(reducer, 0) : acc + cur}, 0)
+    // let res = antinodesMatrix.reduce(reducer = (acc, cur) => Array.isArray(cur) ? acc + cur.reduce(reducer, 0) : acc + cur , 0)
+
     console.log(res)
 
     return res
     
 }
+
+
+function flatter(input){
+    return input.reduce(reducer, [])
+    
+    function reducer(acc, cur){
+        // base case
+        if(!Array.isArray(cur)){
+            return acc.concat(cur)
+        }
+        //recursive case
+        return acc.concat(cur.reduce(reducer, []))
+    }
+}
+
+let arr = [1, [[2, 3], 4], [5]]
+let arr2 = [1, 2, [3, 4, [5, 6]]]
+
+// console.log(flatter(arr)) // [ 1, 2, 3, 4, 5 ]
+// console.log(flatter(arr2)) // [ 1, 2, 3, 4, 5, 6 ]
