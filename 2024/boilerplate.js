@@ -26,6 +26,14 @@ function solveExample(input){
     }
 }
 
+class Grid{
+    constructor(input){
+        this.matrix = input.trim().split("\n").map(l => l.trim().split(""))
+        this.maxRow = this.matrix.length
+        this.maxCol = this.matrix[0].length
+    }
+}
+
 function solveOne(input){
     
 }
