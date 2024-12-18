@@ -9,27 +9,55 @@ class Grid{
         this.matrix = input.trim().split("\n").map(l => l.trim().split("").map(Number))
         this.maxRow = this.matrix.length
         this.maxCol = this.matrix[0].length
-        this.scoreMapOne = Array.from({length: this.maxRow}, () => Array(this.maxCol).fill(undefined))
+        this.scoreMap = Array.from({length: this.maxRow}, () => Array(this.maxCol).fill(undefined))
+        this.ratingMap = Array.from({length: this.maxRow}, () => Array(this.maxCol).fill(undefined))
     }
 
     solveOne(){
         for(let row=0 ; row<this.maxRow ; row++){
             for(let col=0 ; col<this.maxCol ; col++){
                 if(this.matrix[row][col] === 0){
-                    this.scoreMapOne[row][col] = this.getTrailScore([row, col])
+                    this.scoreMap[row][col] = this.getTrailScore([row, col])
                 }
             }
         }
 
-        console.table(this.scoreMapOne);
+        // console.table(this.scoreMap);
 
         let res = 0
 
         // add the scores
         for(let row=0 ; row<this.maxRow ; row++){
             for(let col=0 ; col<this.maxCol ; col++){
-                if(this.scoreMapOne[row][col] !== undefined){
-                    res += this.scoreMapOne[row][col]
+                if(this.scoreMap[row][col] !== undefined){
+                    res += this.scoreMap[row][col]
+                }
+            }
+        }
+
+        console.log(res)
+
+        return res
+    }
+
+    solveTwo(){
+        for(let row=0 ; row<this.maxRow ; row++){
+            for(let col=0 ; col<this.maxCol ; col++){
+                if(this.matrix[row][col] === 0){
+                    this.ratingMap[row][col] = this.getTrailRating([row, col])
+                }
+            }
+        }
+
+        // console.table(this.ratingMap);
+
+        let res = 0
+
+        // add the scores
+        for(let row=0 ; row<this.maxRow ; row++){
+            for(let col=0 ; col<this.maxCol ; col++){
+                if(this.ratingMap[row][col] !== undefined){
+                    res += this.ratingMap[row][col]
                 }
             }
         }
@@ -41,7 +69,7 @@ class Grid{
 
     
     // Array<row: Number, col: Number> : Number
-    // From a starting position [row, col] i.e a 0, return the score of this trail, i.e the number of paths leading to a 9
+    // From a starting position [row, col] i.e a 0, return the score of this trail, i.e the number reachable 9
     getTrailScore(position){
         //grid reproduction keeping track of the 9-height positions reached
         let visited9 = Array.from({length: this.maxRow}, () => Array(this.maxCol).fill(false))
@@ -75,6 +103,34 @@ class Grid{
         }
 
         return score
+    }
+
+    // Array<row: Number, col: Number> : Number
+    // From a starting position [row, col] i.e a 0, return the rating of this trail, i.e the number of paths leading to a 9
+    getTrailRating(position){
+        let rating = 0
+
+        //dfs
+        //arrow function so this points to the Grid instance, arrow functions are also not hoisted like traditional functions
+        const solve = (currPosition, currHeight) => {
+            // base case
+            if(currHeight === 9){ 
+                rating++
+            }
+
+            let VNNeighbors = this.vonNeumannNeighbors(currPosition)
+            for(let neighb of VNNeighbors){
+                let [rown, coln] = neighb
+                //keep on going if the height of the neighbor is one above the current height (as per the even, gradual, uphill slope rule)
+                if(this.matrix[rown][coln] === currHeight + 1){
+                    solve(neighb, currHeight + 1)
+                }
+            }
+        }
+
+        solve(position, 0)
+
+        return rating
     }
 
 
@@ -119,8 +175,8 @@ function solveTwo(input){
         const gridInput = new Grid(input)
         // assert.deepStrictEqual(gridExample.solveOne(), 36)
         // assert.deepStrictEqual(gridInput.solveOne(), 778) // 778
-        // assert.deepStrictEqual(gridExample.solveTwo(), 36)
-        // assert.deepStrictEqual(gridInput.solveTwo(), 778)
+        // assert.deepStrictEqual(gridExample.solveTwo(), 81)
+        assert.deepStrictEqual(gridInput.solveTwo(), 1925) // 1925
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
