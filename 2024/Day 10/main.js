@@ -150,20 +150,6 @@ class Grid{
     }
 }
 
-// ============================ PART II ============================
-function solveTwoExample(input){
-    input = input.replaceAll("\r", "")
-
-    let lines = input.split("\n")
-    if(lines[lines.length-1] === ""){
-        lines.pop()
-    }
-}
-
-function solveTwo(input){
-    
-}
-
 
 // ============================ CALLS ============================
 (() => {
