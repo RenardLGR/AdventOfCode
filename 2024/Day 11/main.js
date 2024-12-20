@@ -10,7 +10,8 @@ const assert = require("assert");
         // assert.deepStrictEqual(solveOne(example), 55312)
         // assert.deepStrictEqual(solveOne(input), 186203)
         // assert.deepStrictEqual(solveTwo(example), 65601038650482) // 65601038650482
-        assert.deepStrictEqual(solveTwo(input), 221291560078593) // 221291560078593
+        // assert.deepStrictEqual(solveTwo(input), 221291560078593) // 221291560078593
+        assert.deepStrictEqual(solveTwoBis(input), 221291560078593) // 221291560078593
 
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
@@ -53,7 +54,7 @@ function solveOne(input){
 
 // ============================ PART II ============================
 // Using a nested Objects memoization. First layer has generationLeft as keys, second has stone as keys.
-// memo[generationLeft][stone] will give the final length created from this branch.
+// memo[generationLeft][stone] will give the final number of stones (length) created from this branch.
 function solveTwo(input){
     input = input.trim()
 
@@ -110,7 +111,54 @@ function solveTwo(input){
     }
 }
 
-// Same but using the Map object
+// Same but using the Map object and only one layer : the key is the pair (stone, generationLeft) stringified
+// Using the map object is not really useful as an simple object would act similarly.
 function solveTwoBis(input){
-    
+    input = input.trim()
+
+    let stones = input.split(" ").map(Number)
+    let res = 0
+    const cache = new Map()
+
+    stones.forEach(stone => {
+        res += getLength(stone, 75)
+    })
+
+    console.log(res)
+
+    return res
+
+    function getLength(stone, generationLeft){
+        if(generationLeft === 0){
+            return 1
+        }
+
+        let key = JSON.stringify([stone, generationLeft])
+        // let key = `${stone},${generationLeft}`
+
+        //check if cache has key
+        if(cache.has(key)){
+            return cache.get(key)
+        }
+
+        //otherwise recursively find the answer using the rules
+        //rule 1
+        if(stone === 0){
+            cache.set(key, getLength(1, generationLeft-1))
+        }
+
+        //rule 2
+        else if((""+stone).length%2 === 0){
+            let str = ""+stone
+            let left = Number(str.slice(0, str.length/2))
+            let right = Number(str.slice(str.length/2))
+
+            cache.set(key, getLength(left, generationLeft-1) + getLength(right, generationLeft-1))
+        }
+        //general case
+        else{
+            cache.set(key, getLength(stone*2024, generationLeft-1))
+        }
+        return cache.get(key)
+    }
 }
