@@ -53,6 +53,7 @@ function solveOne(input){
 }
 
 // ============================ PART II ============================
+// We just want the length, the content is not important.
 // Using a nested Objects memoization. First layer has generationLeft as keys, second has stone as keys.
 // memo[generationLeft][stone] will give the final number of stones (length) created from this branch.
 function solveTwo(input){

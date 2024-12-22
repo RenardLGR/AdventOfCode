@@ -69,7 +69,7 @@ class Grid{
 
     
     // Array<row: Number, col: Number> : Number
-    // From a starting position [row, col] i.e a 0, return the score of this trail, i.e the number reachable 9
+    // From a starting position [row, col] i.e a 0, return the score of this trail, i.e the number of reachable 9
     getTrailScore(position){
         //grid reproduction keeping track of the 9-height positions reached
         let visited9 = Array.from({length: this.maxRow}, () => Array(this.maxCol).fill(false))

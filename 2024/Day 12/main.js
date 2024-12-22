@@ -51,11 +51,235 @@ class Grid{
 
         let res = 0
 
-        for(let type in areas){
-            let a = areas[type]
-            let p = perimeters[type]
+        for(let region in areas){
+            let a = areas[region]
+            let p = perimeters[region]
 
             res += a * p
+        }
+
+        console.log(res)
+
+        return res
+    }
+
+    solveTwo(){
+        // Key takes : Corners give a general idea on sides.
+        // An edge is two vertices connected. In our case, all edges are vertical or horizontal. The number of edges (sides) of a simple polygon always equals the number of vertices (corners). But we don't always deal with simple polygon here.
+        // Each cell can have a maximum of 4 corners. Lets consider for this demonstration the North-East corner of a cell, and let's consider the adjacent cells of this corner. Namely the cells North, North-East and East of this cell.
+
+        // The first part will focus on extracting corners, the second part will draw sides out of them.
+
+        // PART I : is the current cell a corner?
+        // bottom left ■ is the current cell we are checking if it's a corner or not, otherwise it is a cell belonging to the same region
+        // □ is a cell of another region or the side of the matrix
+
+        // Case 0 neighbor :
+        //      □ □
+        //      ■ □ => cell IS a corner
+
+        // Case 1 neighbor :
+        //      ■ □
+        //      ■ □ => cell is NOT a corner
+
+        //      □ ■
+        //      ■ □ => cell IS a corner
+        
+        //      □ □
+        //      ■ ■ => cell is NOT a corner
+        
+        // Case 2 neighbors :
+        //      ■ ■
+        //      ■ □ => cell IS a corner
+
+        //      □ ■
+        //      ■ ■ => cell IS a corner
+
+        //      ■ □
+        //      ■ ■ => cell IS a corner
+
+        // Case 3 neighbors :
+        //      ■ ■
+        //      ■ ■ => cell is NOT a corner
+
+        // So, for a given cell and a given corner (between N-E, S-E, S-W and N-W) and considering the 3 neighbors surrounding this corner, we can conclude that :
+        // 0 neighbor of the same region means we have a corner, 1 neighbor we have a corner only if the neighbor is on the opposite of the corner, 2 neighbors we always have a corner, and 3 neighbors we don't have a corner.
+        // What is the influence of being on a side ?
+
+        // Case side 0 neighbor :
+        //      ___
+        //      ■ □ => cell IS a corner
+
+        // Case side 1 neighbor :
+        //      ___
+        //      ■ ■ => cell is NOT a corner
+
+        // And obviously, if the current cell is on a corner of the matrix :
+        //      ___
+        //        ■| => cell IS a corner
+
+        // Once again, 0 neighbor of the same region means we have a corner, 1 neighbor we have a corner only if the neighbor is on the opposite of the corner, 2 neighbors we always have a corner, and 3 neighbors we don't have a corner.
+
+
+        // Now consider this situation : 
+
+        //      ■ □
+        //      ■ ■ 
+        // The bottom right cell has a corner in N-E, the bottom left cell has the same corner in N-W, and the top left cell has the same corner in S-E. We will take that into consideration.
+        // To do so, we will create a matrix N+1 x N+1 (one extra row and one extra column) of corners. Considering the cell [0, 0], its corners will be in the corner matrix :
+
+        // [0, 0]   [0, 1]
+        //        ■
+        // [1, 0]   [1, 1]
+
+        // In other words, for a given cell [row, col] :
+        //      the N-E corner will be in the position [row, col+1] in the corner matrix
+        //      the S-E corner will be in the position [row+1, col+1] in the corner matrix
+        //      the S-W corner will be in the position [row+1, col] in the corner matrix
+        //      the N-W corner will be in the position [row, col] in the corner matrix
+
+        // In this example, only col indices of the corner matrix are displayed :
+        //    0 1 2 3
+        //       ■
+        //     ■ ■ ■
+        //       ■
+
+        // PART II: do we have a side?
+        // A side is two corners connected but it not as simple as counting corners. Consider these examples :
+        //      ■ ■|□ □                ■ ■|□ □
+        //      ■ ■|□ □                ■ ■|□ □
+        //      □ □|■ ■        and     □ □|□ □
+        //      □ □|■ ■                ■ ■|□ □
+        // Following the line, the first example has 3 corners : at the beginning row 0, between row 1 and row 2 and at the end row 3
+        //                     the second example has 4 corners : at the beginning row 0, between row 1 and row 2, between row 2 and 3 and at the end row 3
+        // But in both examples, we have 2 sides, from row 0 to row 1 and from row 2 to 3 in example 1. In example 2, from 0 to 1 and from 3 to 3.
+        // In fact, the middle corner in example 1 acts both as the end of the first side and the beginning of the another one.
+        // Considering these cases :
+        //      ■ ■|□ □                ■ ■|□ □              ■ ■|□ □
+        //      ■ ■|□ □                ■ ■|□ □              ■ ■|□ □
+        //      □ □|■ ■        and     □ □|□ □      and     ■ ■|■ □
+        //      □ □|■ ■                ■ ■|□ □              ■ ■|■ □
+        // We need to monitor cells on both sides of a side. We can conclude that a closing corner can act also as an opening corner if one and only one cell following the corner is belonging to the region.
+
+        // PART III : coding
+        // For a region matrix NxN, we will have a corner matrix N+1xN+1.
+        // We will store a cornerMatrix for each region, as we traverse this.region, we will update their respective corner matrix.
+        // At the end we will run through every corner horizontally then vertically. Check for each corner if it opening a side or closing a side (or both) and conclude how many sides we have.
+
+        // Region as keys
+        let areas = {}
+        let cornersMatrices = {}
+
+        //PART I : PLACE CORNERS AND AREAS
+        for(let row=0 ; row<this.maxRow ; row++){
+            for(let col=0 ; col<this.maxCol ; col++){
+                const currRegion = this.region[row][col]
+                // update areas
+                areas[currRegion] = (areas[currRegion] || 0) + 1
+
+                //update corners
+                //create the corner amtrix for this region if needed, its dimensions are N+1 x N+1
+                if(!(currRegion in cornersMatrices)){
+                    let cornerMatrix = this.getUndefinedMatrix().map(row => row.concat(undefined))
+                    cornerMatrix.push(Array(this.maxCol + 1).fill(undefined))
+                    cornersMatrices[currRegion] = cornerMatrix
+                }
+
+                //place corners
+                const DIAGS = [[-1, 1], [1, 1], [1, -1], [-1, -1]] // N-E, S-E, S-W, N-W
+                const CORNERS_OFFSETS = [[0, 1], [1, 1], [1, 0], [0, 0]] // N-E, S-E, S-W, N-W // It means the corner S-W of the cell [row, col] in the matrix will correspond to [row+1, col] in the corner matrix
+                for(let i=0 ; i<4 ; i++){
+                    let diag = DIAGS[i]
+                    let offsets = [[diag[0], 0] , diag, [0, diag[1]]] // same row, opposite, same col
+                    let neighbors = offsets.map(ofs => [row+ofs[0] , col+ofs[1]])
+
+                    let neighborsCount = 0
+                    let isOppositeNeighbor = false
+                    neighbors.forEach((n, idx) => {
+                        let [rown, coln] = n
+                        if(rown>=0 && rown<this.maxRow && coln>=0 && coln<this.maxCol){
+                            //check if neighbor is of the same region
+                            if(this.region[rown][coln] === currRegion){
+                                if(idx === 1) isOppositeNeighbor = true
+                                neighborsCount++
+                            }
+                        }
+                    })
+                    // Every cases where there is a corner
+                    if(neighborsCount === 0 || neighborsCount === 2 || (neighborsCount === 1 && isOppositeNeighbor)){
+                        let cornerOffset = CORNERS_OFFSETS[i]
+                        let [rowc, colc] = [row+cornerOffset[0] , col+cornerOffset[1]]
+                        cornersMatrices[currRegion][rowc][colc] = true
+                    }
+                }
+            }
+        }
+
+        // console.table(this.region)
+        // console.log(areas);
+        
+        // console.table(cornersMatrices["1"])
+        
+        //PART II : FROM CORNER TO CORNER, COUNT SIDES & RESULT
+        let res = 0
+
+        for(let region in areas){
+            let sides = 0
+
+            //horizontal sides
+            for(let row=0 ; row<cornersMatrices[region].length ; row++){
+                let rowSides = 0
+                let isStartSide = false
+                for(let col=0 ; col<cornersMatrices[region][0].length ; col++){
+                    //Starting side corner
+                    if(cornersMatrices[region][row][col] && !isStartSide){
+                        isStartSide = true
+                    }
+                    //Ending side corner but can also be the start of a new side
+                    else if(cornersMatrices[region][row][col]){
+                        isStartSide = false
+                        rowSides++
+                        let topRightCell = [row-1, col] // this will be positions in the matrix
+                        let bottomRightCell = [row, col] // this will be positions in the matrix
+                        if(topRightCell[0]>=0 && bottomRightCell[0]>=0 && topRightCell[0]<this.maxRow && bottomRightCell[0]<this.maxRow && topRightCell[1]>=0 && bottomRightCell[1]>=0 && topRightCell[1]<this.maxCol && bottomRightCell[1]<this.maxCol){
+                            //if one and only one side belongs to the region, the corner acts also as a starting corner (see AB2 example)
+                            if((this.region[topRightCell[0]][topRightCell[1]]==region && this.region[bottomRightCell[0]][bottomRightCell[1]]!=region) || (this.region[topRightCell[0]][topRightCell[1]]!=region && this.region[bottomRightCell[0]][bottomRightCell[1]]==region)){
+                                isStartSide = true
+                            }
+                        }
+                    }
+                }                
+                sides += rowSides
+            }
+
+            //vertical sides
+            for(let col=0 ; col<cornersMatrices[region][0].length ; col++){
+                let colSides = 0
+                let isStartSide = false
+                for(let row=0 ; row<cornersMatrices[region].length ; row++){
+                    //Starting side corner
+                    if(cornersMatrices[region][row][col] && !isStartSide){
+                        isStartSide = true
+                    }
+                    //Ending side corner but can also be the start of a new side
+                    else if(cornersMatrices[region][row][col]){
+                        isStartSide = false
+                        colSides++
+                        let bottomLeftCell = [row, col-1] // this will be positions in the matrix
+                        let bottomRightCell = [row, col] // this will be positions in the matrix
+                        if(bottomLeftCell[0]>=0 && bottomRightCell[0]>=0 && bottomLeftCell[0]<this.maxRow && bottomRightCell[0]<this.maxRow && bottomLeftCell[1]>=0 && bottomRightCell[1]>=0 && bottomLeftCell[1]<this.maxCol && bottomRightCell[1]<this.maxCol){
+                            //if one and only one side belongs to the region, the corner acts also as a starting corner (see AB2 example)
+                            if((this.region[bottomLeftCell[0]][bottomLeftCell[1]]==region && this.region[bottomRightCell[0]][bottomRightCell[1]]!=region) || (this.region[bottomLeftCell[0]][bottomLeftCell[1]]!=region && this.region[bottomRightCell[0]][bottomRightCell[1]]==region)){
+                                isStartSide = true
+                            }
+                        }
+                    }
+                }
+                sides += colSides
+            }
+            // console.log("for region :", region, "I found ", sides, "sides");
+            let a = areas[region]
+            res += a * sides
         }
 
         console.log(res)
@@ -145,18 +369,26 @@ class Grid{
     try {
         const example = fs.readFileSync(__dirname + "/example.txt").toString()
         const miniExample2 = fs.readFileSync(__dirname + "/mini-example-2.txt").toString()
+        const exampleE = fs.readFileSync(__dirname + "/exampleE.txt").toString()
+        const exampleAB = fs.readFileSync(__dirname + "/exampleAB.txt").toString()
+        const exampleAB2 = fs.readFileSync(__dirname + "/exampleAB2.txt").toString()
         const input = fs.readFileSync(__dirname + "/input.txt").toString()
         // console.log(input);
         const gridExample = new Grid(example)
         const gridMiniExample2 = new Grid(miniExample2)
+        const gridExampleE = new Grid(exampleE)
+        const gridExampleAB = new Grid(exampleAB)
+        const gridExampleAB2 = new Grid(exampleAB2)
         const gridInput = new Grid(input)
         // assert.deepStrictEqual(gridExample.solveOne(), 1930)
         // assert.deepStrictEqual(gridMiniExample2.solveOne(), 772)
-        assert.deepStrictEqual(gridInput.solveOne(), 1437300) // 1437300
+        // assert.deepStrictEqual(gridInput.solveOne(), 1437300) // 1437300
 
-        // assert.deepStrictEqual(gridInput.solveOne(), 778) // 778
-        // assert.deepStrictEqual(gridExample.solveTwo(), 81)
-        // assert.deepStrictEqual(gridInput.solveTwo(), 1925) // 1925
+        // assert.deepStrictEqual(gridExample.solveTwo(), 1206) // 1206
+        // assert.deepStrictEqual(gridExampleE.solveTwo(), 236) // 236
+        // assert.deepStrictEqual(gridExampleAB.solveTwo(), 368) // 368
+        // assert.deepStrictEqual(gridExampleAB2.solveTwo(), 624) // 624 // 16 sides of area 36 for A, 4 sides of area 4 (3 times) for B
+        assert.deepStrictEqual(gridInput.solveTwo(), 849332) // 849332
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
