@@ -287,6 +287,203 @@ class Grid{
         return res
     }
 
+    solveTwoBis(){
+        // PART I : conception
+        // A cell can only have two statuses : belonging to the region or not. Let ■ be a cell belonging to the current region we are parsing. Let □ be a cell of a different region.
+        // Let's parse the matrix two rows (and two cols at a time), we have a side if one and only one cell of a pair is belonging to thr region. See these examples with two rows at a time :
+        // ■ ■ ■ ■          □ □ □ □             □ □ □ □             ■ ■ ■ ■             ■ ■ □ □
+        // □ □ □ □ (1)      ■ ■ ■ ■ (2)         □ □ □ □ (3)         ■ ■ ■ ■ (4)         □ □ ■ ■ (5)
+        // We have 1 side in example 1 and 2, 0 side in example 3 and 4 and 2 sides on example 5.
+
+        // Now that we are able to differentiate what is a side from what is not. Let's find how a side starts :
+        // ■ ■ ■ ■          □ □ □ □             ■ ■ □ □
+        // ■ ■ □ □ (1)      □ □ ■ ■ (2)         □ □ ■ ■ (3)
+
+        // And because it is very similar, how a side ends :
+        // ■ ■ ■ ■          □ □ □ □             ■ ■ □ □
+        // □ □ ■ ■ (1)      ■ ■ □ □ (2)         □ □ ■ ■ (3)
+
+        // We can conclude that considering two pairs, compared to the previous pair, if at least one element of the current pair changes, we have an event, either the start or the end (por both) of a side.
+
+        // PART II : execution
+        // We first need to be able to register an event between two pairs.
+        // ■ ■ □ □
+        // ■ ■ ■ □
+        //   p i
+        // Let i the current index and p the previous index, if (top[p]===top[i] && bottom[p]===bottom[i]) we have no event.
+        // In a case of an event, if we were on a side, it is the end of it. If top[i] !== bottom[i], we have the start of a side.
+        // For borders, it is slightly different and slightly simpler.
+
+        let areas = {}
+        for(let row=0 ; row<this.maxRow ; row++){
+            for(let col=0 ; col<this.maxCol ; col++){
+                const currRegion = this.region[row][col]
+                // update areas
+                areas[currRegion] = (areas[currRegion] || 0) + 1
+            }
+        }
+
+        let res = 0
+        for(let region in areas){
+            let regionSides = 0
+            // HORIZONTAL SIDES
+            // edge case for matrix borders
+            let isPrevTopRegion = this.region[0][0] == region
+            let isPrevBottomRegion = this.region[this.maxRow-1][0] == region
+            let isTopBorderSide = isPrevTopRegion //if the 0th element of the top row is in region it was the start of a side
+            let isBottomBorderSide = isPrevBottomRegion //if the 0th element of the bottom row is in region it was the start of a side
+            for(let col=1 ; col<this.maxCol ; col++){
+                let isCurTopRegion = this.region[0][col] == region
+                let isCurBottomRegion = this.region[this.maxRow-1][col] == region
+                if(isPrevTopRegion !== isCurTopRegion){
+                    if(isTopBorderSide){
+                        regionSides++
+                        isTopBorderSide = false
+                    }else{
+                        isTopBorderSide = true
+                    }
+                }
+                if(isPrevBottomRegion !== isCurBottomRegion){
+                    if(isBottomBorderSide){
+                        regionSides++
+                        isBottomBorderSide = false
+                    }else{
+                        isBottomBorderSide = true
+                    }
+                }
+                //update
+                isPrevTopRegion = isCurTopRegion
+                isPrevBottomRegion = isCurBottomRegion
+            }
+            //close our sides
+            if(isTopBorderSide) regionSides++
+            if(isBottomBorderSide) regionSides++
+
+            //general case for matrix inside
+            for(let row=1 ; row<this.maxRow ; row++){
+                let isPrevAboveRegion = this.region[row-1][0] == region
+                let isPrevBelowRegion = this.region[row][0] == region
+                // We have the start of a side, if one and only one of the framing cell is of the region
+                let isSide = isPrevAboveRegion ^ isPrevBelowRegion
+                let rowSides = 0
+                for(let col=1 ; col<this.maxCol ; col++){
+                    let isCurAboveRegion = this.region[row-1][col] == region
+                    let isCurBelowRegion = this.region[row][col] == region
+                    // if(xnor(isPrevAboveRegion, isCurAboveRegion) && xnor(isPrevBelowRegion, isCurBelowRegion)) continue //no change
+                    if((isPrevAboveRegion === isCurAboveRegion) && (isPrevBelowRegion === isCurBelowRegion)) continue //no change
+                    else{
+                        // we have a change in the status, if we were in a side, end of side
+                        if(isSide){
+                            isSide = false
+                            rowSides++
+                        }
+                        // we can now have :
+                        // above and below are region => it is not a start of a side
+                        // none are region => it is not a start of a side
+                        // one and only one is region => start of side
+                        if(isCurAboveRegion ^ isCurBelowRegion){ // if above and below are different
+                            isSide = true
+                        }
+                    }
+
+                    isPrevAboveRegion = isCurAboveRegion
+                    isPrevBelowRegion = isCurBelowRegion
+                }
+                //close our side
+                if(isSide) rowSides++
+                regionSides += rowSides
+                // console.log("for region", region, "for between rows", row-1, "and", row, "I found", rowSides, "horizontal sides")
+            }
+
+            // VERTICAL SIDES
+            // edge case for matrix borders
+            let isPrevLeftRegion = this.region[0][0] == region
+            let isPrevRightRegion = this.region[0][this.maxCol-1] == region
+            let isLeftBorderSide = isPrevLeftRegion //if the 0th element of the left col is in region it was the start of a side
+            let isRightBorderSide = isPrevRightRegion //if the 0th element of the right col is in region it was the start of a side
+            for(let row=1 ; row<this.maxRow ; row++){
+                let isCurLeftRegion = this.region[row][0] == region
+                let isCurRightRegion = this.region[row][this.maxCol-1] == region
+                if(isPrevLeftRegion !== isCurLeftRegion){
+                    if(isLeftBorderSide){
+                        regionSides++
+                        isLeftBorderSide = false
+                    }else{
+                        isLeftBorderSide = true
+                    }
+                }
+                if(isPrevRightRegion !== isCurRightRegion){
+                    if(isRightBorderSide){
+                        regionSides++
+                        isRightBorderSide = false
+                    }else{
+                        isRightBorderSide = true
+                    }
+                }
+                //update
+                isPrevLeftRegion = isCurLeftRegion
+                isPrevRightRegion = isCurRightRegion
+            }
+            //close our sides
+            if(isLeftBorderSide) regionSides++
+            if(isRightBorderSide) regionSides++
+
+            //general case for matrix inside
+            for(let col=1 ; col<this.maxCol ; col++){
+                let isPrevLeftRegion = this.region[0][col-1] == region
+                let isPrevRightRegion = this.region[0][col] == region
+                // We have the start of a side, if one and only one of the framing cell is of the region
+                let isSide = isPrevLeftRegion ^ isPrevRightRegion
+                let colSides = 0
+                for(let row=1 ; row<this.maxRow ; row++){
+                    let isCurLeftRegion = this.region[row][col-1] == region
+                    let isCurRightRegion = this.region[row][col] == region
+                    // if(xnor(isPrevLeftRegion, isCurLeftRegion) && xnor(isPrevRightRegion, isCurRightRegion)) continue //no change
+                    if((isPrevLeftRegion === isCurLeftRegion) && (isPrevRightRegion === isCurRightRegion)) continue //no change
+                    else{
+                        // we have a change in the status, if we were in a side, end of side
+                        if(isSide){
+                            isSide = false
+                            colSides++
+                        }
+                        // we can now have :
+                        // left and right are region => it is not a start of a side
+                        // none are region => it is not a start of a side
+                        // one and only one is region => start of side
+                        if(isCurLeftRegion ^ isCurRightRegion){ // if left and right are different
+                            isSide = true
+                        }
+                    }
+
+                    isPrevLeftRegion = isCurLeftRegion
+                    isPrevRightRegion = isCurRightRegion
+                }
+                //close our side
+                if(isSide) colSides++
+                regionSides += colSides
+                // console.log("for region", region, "for between col", col-1, "and", col, "I found", colSides, "vertical sides")
+            }
+
+            // console.log("for region :", region, "I found ", regionSides, "sides");
+            // console.table(this.region)
+            let a = areas[region]
+            res += a * regionSides
+        }
+
+        console.log(res);
+        
+        return res
+
+
+        function xnor(operand1, operand2){
+            // return 1 if both operands are the same
+            // true xnor true = 1
+            // false xnor false = 1
+            // 0 otherwise
+            return ~(operand1 ^ operand2) & 1
+        }
+    }
+
     // void : Array<Array<>>
     // Give a region to every cells. The ID of their region doesn't really matter. Reminder : Each cell with the same region will be connected and have the same type.
     getRegions(){
@@ -388,7 +585,13 @@ class Grid{
         // assert.deepStrictEqual(gridExampleE.solveTwo(), 236) // 236
         // assert.deepStrictEqual(gridExampleAB.solveTwo(), 368) // 368
         // assert.deepStrictEqual(gridExampleAB2.solveTwo(), 624) // 624 // 16 sides of area 36 for A, 4 sides of area 4 (3 times) for B
-        assert.deepStrictEqual(gridInput.solveTwo(), 849332) // 849332
+        // assert.deepStrictEqual(gridInput.solveTwo(), 849332) // 849332
+
+        // assert.deepStrictEqual(gridExample.solveTwoBis(), 1206) // 1206
+        // assert.deepStrictEqual(gridExampleE.solveTwoBis(), 236) // 236
+        // assert.deepStrictEqual(gridExampleAB.solveTwoBis(), 368) // 368
+        // assert.deepStrictEqual(gridExampleAB2.solveTwoBis(), 624) // 624 // 16 sides of area 36 for A, 4 sides of area 4 (3 times) for B
+        assert.deepStrictEqual(gridInput.solveTwoBis(), 849332) // 849332
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
