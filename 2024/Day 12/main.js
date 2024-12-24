@@ -312,7 +312,7 @@ class Grid{
         //   p i
         // Let i the current index and p the previous index, if (top[p]===top[i] && bottom[p]===bottom[i]) we have no event.
         // In a case of an event, if we were on a side, it is the end of it. If top[i] !== bottom[i], we have the start of a side.
-        // For borders, it is slightly different and slightly simpler.
+        // For borders, it is slightly different we just have to check if the current cell belongs to the region.
 
         let areas = {}
         for(let row=0 ; row<this.maxRow ; row++){
@@ -484,6 +484,108 @@ class Grid{
         }
     }
 
+    solveTwoTer(){
+        // Same than bis with better syntax.
+        let areas = {}
+        for(let row=0 ; row<this.maxRow ; row++){
+            for(let col=0 ; col<this.maxCol ; col++){
+                const currRegion = this.region[row][col]
+                // update areas
+                areas[currRegion] = (areas[currRegion] || 0) + 1
+            }
+        }
+
+        let res = 0
+        for(let region in areas){
+            let regionSides = 0
+
+            // HORIZONTAL SIDES
+            // edge case borders
+            let isTopSide = this.region[0][0] == region
+            let isBottomSide = this.region[this.maxRow-1][0] == region
+            for(let col=1 ; col<this.maxCol ; col++){
+                let prevTop = this.region[0][col-1] == region
+                let prevBottom = this.region[this.maxRow-1][col-1] == region
+                let curTop = this.region[0][col] == region
+                let curBottom = this.region[this.maxRow-1][col] == region
+                if(prevTop !== curTop){
+                    if(isTopSide) regionSides++
+                    isTopSide = !isTopSide
+                }
+                if(prevBottom !== curBottom){
+                    if(isBottomSide) regionSides++
+                    isBottomSide = !isBottomSide
+                }
+            }
+            //close our side
+            if(isTopSide) regionSides++
+            if(isBottomSide) regionSides++
+
+            //general case inside matrix
+            for(let row=1 ; row<this.maxRow; row++){
+                let isSide = (this.region[row-1][0] == region ^ this.region[row][0] == region) //check if the two elements of the 0th pair are different, if so we have the start of a side
+                for(let col=1 ; col<this.maxCol ; col++){
+                    let [prevTop, prevBottom] = [this.region[row-1][col-1] == region, this.region[row][col-1] == region]
+                    let [curTop, curBottom] = [this.region[row-1][col] == region, this.region[row][col] == region]
+                    if(prevTop === curTop && prevBottom === curBottom) continue // no change detected
+                    else{
+                        if(isSide) regionSides++
+                        isSide = curTop ^ curBottom //check if the two elements of the cur pair are different, if so we have the start of a side
+                    }
+                }
+                //close our side
+                if(isSide) regionSides++
+            }
+
+            // VERTICAL SIDES
+            // edge case borders
+            let isLeftSide = this.region[0][0] == region
+            let isRightSide = this.region[0][this.maxCol-1] == region
+            for(let row=1 ; row<this.maxRow ; row++){
+                let prevLeft = this.region[row-1][0] == region
+                let prevRight = this.region[row-1][this.maxCol-1] == region
+                let curLeft = this.region[row][0] == region
+                let curRight = this.region[row][this.maxCol-1] == region
+                if(prevLeft !== curLeft){
+                    if(isLeftSide) regionSides++
+                    isLeftSide = !isLeftSide
+                }
+                if(prevRight !== curRight){
+                    if(isRightSide) regionSides++
+                    isRightSide = !isRightSide
+                }
+            }
+            //close our side
+            if(isLeftSide) regionSides++
+            if(isRightSide) regionSides++
+
+            //general case inside matrix
+            for(let col=1 ; col<this.maxCol; col++){
+                let isSide = (this.region[0][col-1] == region ^ this.region[0][col] == region) //check if the two elements of the 0th pair are different, if so we have the start of a side
+                for(let row=1 ; row<this.maxRow ; row++){
+                    let [prevLeft, prevRight] = [this.region[row-1][col-1] == region, this.region[row-1][col] == region]
+                    let [curLeft, curRight] = [this.region[row][col-1] == region, this.region[row][col] == region]
+                    if(prevLeft === curLeft && prevRight === curRight) continue // no change detected
+                    else{
+                        if(isSide) regionSides++
+                        isSide = curLeft ^ curRight //check if the two elements of the cur pair are different, if so we have the start of a side
+                    }
+                }
+                //close our side
+                if(isSide) regionSides++
+            }
+
+            // console.log("for region :", region, "I found ", regionSides, "sides");
+            // console.table(this.region)
+            let a = areas[region]
+            res += a * regionSides
+        }
+
+        console.log(res)
+
+        return res
+    }
+
     // void : Array<Array<>>
     // Give a region to every cells. The ID of their region doesn't really matter. Reminder : Each cell with the same region will be connected and have the same type.
     getRegions(){
@@ -591,7 +693,13 @@ class Grid{
         // assert.deepStrictEqual(gridExampleE.solveTwoBis(), 236) // 236
         // assert.deepStrictEqual(gridExampleAB.solveTwoBis(), 368) // 368
         // assert.deepStrictEqual(gridExampleAB2.solveTwoBis(), 624) // 624 // 16 sides of area 36 for A, 4 sides of area 4 (3 times) for B
-        assert.deepStrictEqual(gridInput.solveTwoBis(), 849332) // 849332
+        // assert.deepStrictEqual(gridInput.solveTwoBis(), 849332) // 849332
+
+        // assert.deepStrictEqual(gridExample.solveTwoTer(), 1206) // 1206
+        // assert.deepStrictEqual(gridExampleE.solveTwoTer(), 236) // 236
+        // assert.deepStrictEqual(gridExampleAB.solveTwoTer(), 368) // 368
+        // assert.deepStrictEqual(gridExampleAB2.solveTwoTer(), 624) // 624 // 16 sides of area 36 for A, 4 sides of area 4 (3 times) for B
+        assert.deepStrictEqual(gridInput.solveTwoTer(), 849332) // 849332
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
