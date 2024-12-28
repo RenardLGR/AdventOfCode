@@ -15,6 +15,7 @@ const assert = require("assert");
         // assert.deepStrictEqual(solveOneTer(input), 35574) // 35574
 
         assert.deepStrictEqual(solveTwo(input), 80882098756071) // 80882098756071
+        assert.deepStrictEqual(solveTwoBis(input), 80882098756071) // 80882098756071
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
@@ -207,6 +208,8 @@ function solveOneTer(input){
 // 94*A + 22*40 = 8400  <=>  94A + 880 = 8400  <=> 94A = 7520      => A = 80
 // The only natural number solution is A = 80 and B = 40
 
+// The solution is always unique (since one equation is not a scalar multiple of the other). Some solutions will not be integers and will be discarded.
+
 function solveTwo(input){
     input = input.replaceAll("\r", "")
 
@@ -258,4 +261,45 @@ function solveTwo(input){
 
         return [As, Bs]
     }
+}
+
+// Same idea than above, less lines
+function solveTwoBis(input){
+    input = input.replaceAll("\r", "")
+
+    let machines = input.split("\n\n")
+    machines = machines.map(machine => {
+        let instructions = machine.split('\n')
+        const regex = /\d+/g
+
+        let matchA = instructions[0].match(regex).map(Number) // [xoffset, yoffset]
+        let matchB = instructions[1].match(regex).map(Number) // [xoffset, yoffset]
+        let matchPrize = instructions[2].match(regex).map(s => Number(s) + 10000000000000) // [xprize, yprize]
+
+        return {A: matchA, B: matchB, prize: matchPrize}
+    })
+
+    const ATokenCost = 3
+    const BTokenCost = 1
+
+
+    let res = 0
+
+    machines.forEach(machine => {
+        const [xprize, yprize] = machine.prize
+        const [axoffs, ayoffs] = machine.A
+        const [bxoffs, byoffs] = machine.B
+
+        const Bs = (yprize*axoffs - xprize*ayoffs) / (axoffs*byoffs - bxoffs*ayoffs)
+        const As = (xprize - bxoffs*Bs) / axoffs
+
+        if(Number.isInteger(As) && Number.isInteger(Bs)){
+            res += As * ATokenCost
+            res += Bs * BTokenCost
+        }
+    })
+
+    console.log(res)
+
+    return res
 }

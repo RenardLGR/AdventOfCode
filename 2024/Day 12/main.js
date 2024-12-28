@@ -1,6 +1,7 @@
 const fs = require("fs");
 const assert = require("assert");
 
+// solveTwoTer(), solveTwoQuater() and solveTwoQuinqies() are quality code. The first two attempts were a bit messy.
 class Grid{
     constructor(input){
         this.matrix = input.trim().split("\n").map(l => l.trim().split(""))
@@ -586,6 +587,112 @@ class Grid{
         return res
     }
 
+    solveTwoQuater(){
+        // Although, this code looks a lot like solveTwo(), corners are not the same.
+        // A cell can only have two statuses : belonging to the region or not. Let ■ be a cell belonging to the current region we are parsing. Let □ be a cell of a different region.
+        // Let be o a corner. There are two types of corners, a concave corner like (1) and a convex corner like (2).
+        // ■ ■ □ □              ■ □ □ □
+        // ■ ■ o □              ■ □ o □
+        // ■ ■ ■ □ (1)          ■ ■ □ □
+        // Imagine walking on the perimeter, there are as many turns as there are sides. The consequence is there as many corners as there are sides. Count how many corners are in a given region.
+        // In conclusion for a cell, look on its sides. If both sides are different region, we have a convex corner. But if both sides are of the region, then look at the diagonal, if the diagonal is a different region, we have a concave corner.
+        // Some corners can overlap, we need to count them multiple times. Example :
+        // o □ □ □ o
+        // □ ■ ■ ■ □
+        // □ ■ o ■ □
+        // o o ■ ■ □
+        // □ o □ □ o
+        // There are 3 outer horizontal sides and 3 outer vertical sides ; but the 2 inner horizontal sides and 2 inner vertical sides create 4 corners with all 4 overlapping !
+        // For a total of 10 sides and 10 corners.
+        // While I am at it and to fancy a change, let's find region with a bfs instead of a dfs.
+    
+        let price = 0
+        let visited = this.getUndefinedMatrix()
+        for(let row=0 ; row<this.maxRow ; row++){
+            for(let col=0 ; col<this.maxCol ; col++){
+                if(visited[row][col]) continue
+                const region = this.getRegionBFS([row, col])
+                let regionSet = new Set()
+                region.forEach(coord => regionSet.add(`${coord}`))
+                
+                let area = region.length
+                let corners = 0
+                for(let [crow, ccol] of region){
+                    visited[crow][ccol] = true
+                    const DIAGS = [[-1, 1], [1, 1], [1, -1], [-1, -1]] // N-E, S-E, S-W, N-W
+                    // loop on the four corners
+                    for(let diag of DIAGS){
+                        const offsets = [[diag[0], 0] , diag, [0, diag[1]]] // same row, diagonal/opposite, same col
+                        let neighbors = offsets.map(ofs => [crow+ofs[0] , ccol+ofs[1]])
+
+                        //convex corner check : both sides are different region
+                        if(!(regionSet.has(`${neighbors[0]}`)) && !(regionSet.has(`${neighbors[2]}`))){
+                            corners++
+                        }
+
+                        //concave corner check : both sides are region, but diagonal/opposite is not
+                        if(regionSet.has(`${neighbors[0]}`) && regionSet.has(`${neighbors[2]}`) && (!regionSet.has(`${neighbors[1]}`))){
+                            corners++
+                        }
+                    }
+                }
+                price += area * corners
+            }
+        }
+
+        console.log(price)
+
+        return price
+    }
+
+    solveTwoQuinqies(){
+        // We can see a side as a straight, uninterrupted line between two extremities. For every elements on this side, and given a direction parallel to the side, we would get to the same extremity.
+        // We can define a side as an extremity and a direction.
+
+        let price = 0
+        let visited = this.getUndefinedMatrix()
+        for(let row=0 ; row<this.maxRow ; row++){
+            for(let col=0 ; col<this.maxCol ; col++){
+                if(visited[row][col]) continue
+                const region = this.getRegionBFS([row, col])
+                let regionSet = new Set()
+                region.forEach(([r,c]) => {
+                    regionSet.add(`${[r,c]}`)
+                    visited[r][c] = true
+                })
+                
+                let area = region.length
+                let sideSet = new Set() // every unique pair of extremity and direction corresponding to each side
+                const directions = [[-1, 0], [0, 1], [1, 0], [0, -1]] // North, East, South, West
+                for(let [crow, ccol] of region){
+                    //search for a cell on a side, and get the direction of said side, or literally the direction of the alien
+                    for(let [offsr, offsc] of directions){
+                        if(regionSet.has(`${[crow+offsr, ccol+offsc]}`)) continue
+
+                        //we now have a cell on a side, the direction is towards the alien cell, we want to move perpendicular to that direction so the movement is parallel to/on the side. To do so, we are gonna move the row with the offset col and the col with the offset row
+
+                        let [rr, cc] = [crow, ccol]
+
+                        //Trace the side : move toward the extremity
+                        //while moving on the side, i.e the parallel element is in the region AND the facing element is not in the region (an alien)
+                        while(regionSet.has(`${[rr+offsc, cc+offsr]}`) && !(regionSet.has(`${[rr+offsr, cc+offsc]}`))){
+                            rr += offsc
+                            cc += offsr
+                        }
+
+                        //Once the extremity is reached, add it to the set. Every cell from this side will reach the same point. Insert the extremity and the direction into our set
+                        sideSet.add(`${[rr, cc, offsr, offsc]}`)
+                    }
+                }
+                const sides = sideSet.size
+                price += area * sides
+            }
+        }
+        console.log(price)
+
+        return price
+    }
+
     // void : Array<Array<>>
     // Give a region to every cells. The ID of their region doesn't really matter. Reminder : Each cell with the same region will be connected and have the same type.
     getRegions(){
@@ -638,6 +745,35 @@ class Grid{
                 }
             }
         }
+    }
+
+    // Array<row: Number, col: Number> : Array<Array<row: Number, col: Number>>
+    // From a position [row, col], return an array containing the position of each cells of the region the input is part of (input included)
+    // Same result than above, different methodology.
+    getRegionBFS(position){
+        const [row, col] = position
+        const type = this.matrix[row][col]
+
+        const visited = this.getUndefinedMatrix()
+        visited[row][col] = true
+        const region = []
+        const toVisit = [position] //queue FIFO
+
+        //bfs
+        while(toVisit.length > 0){
+            const curr = toVisit.shift()
+            region.push(curr)
+            const neighbors = this.vonNeumannNeighbors(curr)
+            for(let [nrow, ncol] of neighbors){
+                // const [nrow, ncol] = neighbor
+                if(this.matrix[nrow][ncol]===type && !visited[nrow][ncol]){
+                    toVisit.push([nrow, ncol])
+                    visited[nrow][ncol] = true
+                }
+            }
+        }
+
+        return region
     }
 
     // void : Array<Array>
@@ -699,7 +835,20 @@ class Grid{
         // assert.deepStrictEqual(gridExampleE.solveTwoTer(), 236) // 236
         // assert.deepStrictEqual(gridExampleAB.solveTwoTer(), 368) // 368
         // assert.deepStrictEqual(gridExampleAB2.solveTwoTer(), 624) // 624 // 16 sides of area 36 for A, 4 sides of area 4 (3 times) for B
-        assert.deepStrictEqual(gridInput.solveTwoTer(), 849332) // 849332
+        // assert.deepStrictEqual(gridInput.solveTwoTer(), 849332) // 849332
+
+
+        // assert.deepStrictEqual(gridExample.solveTwoQuater(), 1206) // 1206
+        // assert.deepStrictEqual(gridExampleE.solveTwoQuater(), 236) // 236
+        // assert.deepStrictEqual(gridExampleAB.solveTwoQuater(), 368) // 368
+        // assert.deepStrictEqual(gridExampleAB2.solveTwoQuater(), 624) // 624 // 16 sides of area 36 for A, 4 sides of area 4 (3 times) for B
+        // assert.deepStrictEqual(gridInput.solveTwoQuater(), 849332) // 849332
+
+        // assert.deepStrictEqual(gridExample.solveTwoQuinqies(), 1206) // 1206
+        // assert.deepStrictEqual(gridExampleE.solveTwoQuinqies(), 236) // 236
+        // assert.deepStrictEqual(gridExampleAB.solveTwoQuinqies(), 368) // 368
+        // assert.deepStrictEqual(gridExampleAB2.solveTwoQuinqies(), 624) // 624 // 16 sides of area 36 for A, 4 sides of area 4 (3 times) for B
+        assert.deepStrictEqual(gridInput.solveTwoQuinqies(), 849332) // 849332
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
