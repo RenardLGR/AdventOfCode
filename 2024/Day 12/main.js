@@ -315,6 +315,8 @@ class Grid{
         // In a case of an event, if we were on a side, it is the end of it. If top[i] !== bottom[i], we have the start of a side.
         // For borders, it is slightly different we just have to check if the current cell belongs to the region.
 
+        // It seems that there are as many horizontal sides as there are vertical sides. Since I can't prove that, and it is not too much added effort, I counted both horizontal and vertical sides.
+
         let areas = {}
         for(let row=0 ; row<this.maxRow ; row++){
             for(let col=0 ; col<this.maxCol ; col++){
@@ -646,7 +648,7 @@ class Grid{
     }
 
     solveTwoQuinqies(){
-        // We can see a side as a straight, uninterrupted line between two extremities. For every elements on this side, and given a direction parallel to the side, we would get to the same extremity.
+        // We can see a side as a straight, uninterrupted line between two extremities (extremities can overlap for a single cell side). For every elements on this side, and given a direction parallel to the side, we would get to the same extremity.
         // We can define a side as an extremity and a direction.
 
         let price = 0
@@ -674,7 +676,7 @@ class Grid{
                         let [rr, cc] = [crow, ccol]
 
                         //Trace the side : move toward the extremity
-                        //while moving on the side, i.e the parallel element is in the region AND the facing element is not in the region (an alien)
+                        //while moving on the side, i.e the adjacent parallel element is in the region AND the facing element is not in the region (an alien)
                         while(regionSet.has(`${[rr+offsc, cc+offsr]}`) && !(regionSet.has(`${[rr+offsr, cc+offsc]}`))){
                             rr += offsc
                             cc += offsr
