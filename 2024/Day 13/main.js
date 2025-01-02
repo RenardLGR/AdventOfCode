@@ -14,8 +14,9 @@ const assert = require("assert");
         // assert.deepStrictEqual(solveOneTer(example), 480) // 480
         // assert.deepStrictEqual(solveOneTer(input), 35574) // 35574
 
-        assert.deepStrictEqual(solveTwo(input), 80882098756071) // 80882098756071
+        // assert.deepStrictEqual(solveTwo(input), 80882098756071) // 80882098756071
         assert.deepStrictEqual(solveTwoBis(input), 80882098756071) // 80882098756071
+        assert.deepStrictEqual(solveTwoTer(input), 80882098756071) // 80882098756071
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
     }
@@ -190,6 +191,7 @@ function solveOneTer(input){
     return res
 }
 // ============================ PART II ============================
+// https://en.wikipedia.org/wiki/System_of_linear_equations#Elimination_of_variables
 // Let's take machine 1 in example.txt
 // Button A: X+94, Y+34
 // Button B: X+22, Y+67
@@ -303,3 +305,108 @@ function solveTwoBis(input){
 
     return res
 }
+
+
+// Using Cramer's rule
+// https://en.wikipedia.org/wiki/Cramer%27s_rule#Explicit_formulas_for_small_systems
+// Let A and B the number of button press of A and B respectively. x_A, x_B the offset on x and y_A, y_B the offset on y for A and B. x_p, y_p the coordinates of the prize.
+// We have the linear system :
+// A*x_A + b*x_B = x_p
+// A*y_A + b*y_B = y_p
+
+// which in matrix format is :
+// |x_a x_B| |A|   |x_p|
+// |y_A y_B|.|B| = |y_p|
+
+// With Cramer's rule, we have :
+
+//        |x_p x_B|      |x_A x_B|
+// A = det|y_p y_B| / det|y_A y_B|  =  ((x_p*y_B) - (x_B*y_p)) / ((x_A*y_B)-(x_B*y_A))   and
+
+
+//        |x_A x_p|      |x_A x_B|
+// B = det|y_A y_p| / det|y_A y_B|  =  ((x_A*y_p) - (x_p*y_A)) / ((x_A*y_B)-(x_B*y_A))
+
+function solveTwoTer(input){
+    input = input.replaceAll("\r", "")
+
+    let machines = input.split("\n\n")
+    machines = machines.map(machine => {
+        let instructions = machine.split('\n')
+        const regex = /\d+/g
+
+        let matchA = instructions[0].match(regex).map(Number) // [xoffset, yoffset]
+        let matchB = instructions[1].match(regex).map(Number) // [xoffset, yoffset]
+        let matchPrize = instructions[2].match(regex).map(s => Number(s) + 10000000000000) // [xprize, yprize]
+
+        return {A: matchA, B: matchB, prize: matchPrize}
+    })
+
+    const ATokenCost = 3
+    const BTokenCost = 1
+
+
+    let res = 0
+
+    machines.forEach(machine => {
+        const [x_p, y_p] = machine.prize
+        const [x_A, y_A] = machine.A
+        const [x_B, y_B] = machine.B
+
+        const A = ((x_p*y_B) - (x_B*y_p)) / ((x_A*y_B)-(x_B*y_A))
+        const B = ((x_A*y_p) - (x_p*y_A)) / ((x_A*y_B)-(x_B*y_A))
+
+        if(Number.isInteger(A) && Number.isInteger(B)){
+            res += A * ATokenCost
+            res += B * BTokenCost
+        }
+    })
+
+    console.log(res)
+
+    return res
+}
+
+//======================================================
+// We can also use the Gauss-Jordan elimination algorithm and achieve the same result.
+// For a system of equations Ax = c where A is the coefficient matrix and c is the column (or vector) of constants, we build the augmented matrix :
+
+// [A|c]
+
+// And by using elementary row operations such as :
+// - Swapping rows.
+// - Scaling rows (multiplying/dividing by constants).
+// - Adding or subtracting multiples of rows.
+
+// We want to get it to its reduced row-echelon form where I is the identity matrix and x is the vector containing the solutions to the system :
+// [I|x]
+
+// In our case, the augmented matrix is :
+// |xa xb xp|                                            |1 0 A|
+// |ya yb yp| and its reduced row-echelon form would be  |0 1 B| where A and B are the solutions of the equations.
+
+// Let's do the calculations :
+
+// L2 - ya/xa * L1 -> L2
+// |xa xb xp|    |      xa                   xb                       xp      |     |xa         xb                  xp          |
+// |ya yb yp| -> |ya - ya/xa * xa       yb - ya/xa * xb       yp - ya/xa * xp |  =  |0   (xayb - xbya)/xa      (xayp - xpya)/xa |
+
+// xa / (xayb - xbya) * L2 -> L2
+// |xa  xb                   xp                 |     |xa     xb                  xp                |
+// |0   1    (xayp - xpya)/xa * xa/(xayb - xbya)|  =  |0      1       (xayp - xpya) / (xayb - xbya) |
+
+// L1 - xb*L2 -> L1
+// |xa  xb-xb     xp - (xb * (xayp - xpya) / (xayb - xbya)) |     |xa  0   (xp(xayb - xbya) - xb(xayp - xpya)) / (xayb - xbya) |
+// |0     1            (xayp - xpya) / (xayb - xbya)        |  =  |0   1           (xayp - xpya) / (xayb - xbya)               |  = 
+
+// |xa  0  (xaxpyb - xbxpya - xaxbyp + xbxpya) / (xayb - xbya)  |     |xa  0  (xaxpyb - xaxbyp) / (xayb - xbya)   |
+// |0   1               (xayp - xpya) / (xayb - xbya)           |  =  |0   1   (xayp - xpya) / (xayb - xbya)      |
+
+// L1/xa -> L1
+// |1  0  (xaxpyb - xaxbyp) / xa(xayb - xbya)  |     |1  0    (xpyb - xbyp) / (xayb - xbya)  |
+// |0  1   (xayp - xpya) / (xayb - xbya)       |  =  |0  1    (xayp - xpya) / (xayb - xbya)  |
+
+// Following Gauss-Jordan, we have :
+// A = (xpyb - xbyp) / (xayb - xbya) and B = (xayp - xpya) / (xayb - xbya) which are the same results as found above using Cramer's rule
+
+// Unfortunately, this algorithm will introduce divisions and so floating point arithmetic and so the program associated will have precision issues.

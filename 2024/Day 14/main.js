@@ -110,7 +110,7 @@ class Grid{
     getRobots(input){
         const lines = input.trim().split("\n")
         return lines.map(l => {
-            const regex = /\-?\d+/g // numbers with an option sign in front
+            const regex = /\-?\d+/g // numbers with an optional sign in front
             const [x, y, vx, vy] = l.match(regex).map(Number)
 
             return {x, y, vx, vy}
