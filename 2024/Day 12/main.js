@@ -656,7 +656,7 @@ class Grid{
         for(let row=0 ; row<this.maxRow ; row++){
             for(let col=0 ; col<this.maxCol ; col++){
                 if(visited[row][col]) continue
-                const region = this.getRegionBFS([row, col])
+                const region = this.getRegionDFS([row, col]) // or this.getRegionBFS([row, col]) (with a "B")
                 let regionSet = new Set()
                 region.forEach(([r,c]) => {
                     regionSet.add(`${[r,c]}`)
@@ -764,6 +764,35 @@ class Grid{
         //bfs
         while(toVisit.length > 0){
             const curr = toVisit.shift()
+            region.push(curr)
+            const neighbors = this.vonNeumannNeighbors(curr)
+            for(let [nrow, ncol] of neighbors){
+                // const [nrow, ncol] = neighbor
+                if(this.matrix[nrow][ncol]===type && !visited[nrow][ncol]){
+                    toVisit.push([nrow, ncol])
+                    visited[nrow][ncol] = true
+                }
+            }
+        }
+
+        return region
+    }
+
+    // Array<row: Number, col: Number> : Array<Array<row: Number, col: Number>>
+    // From a position [row, col], return an array containing the position of each cells of the region the input is part of (input included)
+    // Same result than above, different methodology, use a stack and .push() and .pop() methods instead of a recursion.
+    getRegionDFS(position){
+        const [row, col] = position
+        const type = this.matrix[row][col]
+
+        const visited = this.getUndefinedMatrix()
+        visited[row][col] = true
+        const region = []
+        const toVisit = [position] //stack LIFO
+
+        //dfs
+        while(toVisit.length > 0){
+            const curr = toVisit.pop()
             region.push(curr)
             const neighbors = this.vonNeumannNeighbors(curr)
             for(let [nrow, ncol] of neighbors){
