@@ -15,7 +15,11 @@ const assert = require("assert");
 
         // assert.deepStrictEqual(solveTwoBFS(smallExampleP2), 618) // 618
         // assert.deepStrictEqual(solveTwoBFS(example), 9021) // 9021
-        assert.deepStrictEqual(solveTwoBFS(input), 1319212) // 1319212
+        // assert.deepStrictEqual(solveTwoBFS(input), 1319212) // 1319212
+
+        // assert.deepStrictEqual(solveTwoDFS(smallExampleP2), 618) // 618
+        assert.deepStrictEqual(solveTwoDFS(example), 9021) // 9021
+        // assert.deepStrictEqual(solveTwoDFS(input), 1319212) // 1319212
     // } catch (error) {
         // console.error(`Got an error: ${error.message}`)
     // }
@@ -214,7 +218,141 @@ function solveTwoBFS(input){
     return res
 }
 
+// Same algorithm, using DFS now, using backtrack instead of a deep copy matrix
+function solveTwoDFS(input){
+    input = input.trim().replaceAll("\r", "")
 
+    let [map, movements] = input.split("\n\n")
+    movements = movements.split("\n").join("")
+    const oldMatrix = map.split("\n").map(l => [...l])
+    let matrix = oldMatrix.map(r => {
+        let res = []
+        r.forEach(e => {
+            if(e === "#"){
+                res.push("#")
+                res.push("#")
+            }else if(e === "O"){
+                res.push("[")
+                res.push("]")
+            }else if(e === "."){
+                res.push(".")
+                res.push(".")
+            }else if(e === "@"){
+                res.push("@")
+                res.push(".")
+            }
+        });
+        return res
+    })
+    const maxRow = matrix.length
+    const maxCol = matrix[0].length
+
+
+    const directions = {"^": [-1, 0], ">": [0, 1], "v": [1, 0], "<": [0, -1]}
+    
+    // Simulate the movements
+    for(let move of movements){
+        // Find the robot
+        let robot = [undefined, undefined]
+        for(let row=0 ; row<maxRow ; row++){
+            for(let col=0 ; col<maxCol ; col++){
+                if(matrix[row][col] === "@") robot = [row, col]
+            }
+        }
+
+        const [rOffs, cOffs] = directions[move]
+
+        let seen = new Set()
+        let replacers = {} // coords as key, value is the element that would be inserted in coords
+
+        let [rCur, cCur] = robot // initialize at robot
+        let stack = [[rCur, cCur]] // Stack of items that need to be replaced
+        seen.add(`${[rCur, cCur]}`)
+
+        let isWallAffected = false
+
+        // Using a DFS, find all elements that are going to be replaced and by what. If no walls were affected, at the end replace everything
+        while(stack.length > 0){
+            const [rCur, cCur] = stack.pop()
+
+            const replacee = matrix[rCur][cCur]; // element that will be replaced
+
+            // Check the replacee, i.e. what was replaced, different behaviors for different items
+            // The replacee will go toward the direction 
+            // If the replacee is a wall, cancel everything
+            if(replacee === "#"){
+                isWallAffected = true
+                break
+            }
+            else if(replacee === "."){
+            }
+            // there is propagation toward direction for any of these items :
+            else if(replacee === "@"){
+                replacers[`${[rCur+rOffs, cCur+cOffs]}`] = replacee
+                if(!seen.has(`${rCur+rOffs, cCur+cOffs}`)){
+                    stack.push([rCur+rOffs, cCur+cOffs])
+                    seen.add(`${[rCur+rOffs, cCur+cOffs]}`)
+                }
+            }
+            else if(replacee === "["){
+                replacers[`${[rCur+rOffs, cCur+cOffs]}`] = replacee
+                //propagate toward direction
+                if(!seen.has(`${[rCur+rOffs, cCur+cOffs]}`)){
+                    stack.push([rCur+rOffs, cCur+cOffs])
+                    seen.add(`${[rCur+rOffs, cCur+cOffs]}`)
+                }
+                //closing "]", no info on the replacer
+                if(!seen.has(`${[rCur, cCur+1]}`)){
+                    stack.push([rCur, cCur+1])
+                    seen.add(`${[rCur, cCur+1]}`)
+                }
+            }
+            else if(replacee === "]"){
+                replacers[`${[rCur+rOffs, cCur+cOffs]}`] = replacee
+                //propagate toward direction
+                if(!seen.has(`${[rCur+rOffs, cCur+cOffs]}`)){
+                    stack.push([rCur+rOffs, cCur+cOffs])
+                    seen.add(`${[rCur+rOffs, cCur+cOffs]}`)
+                }
+                //opening "[", no info on the replacer
+                if(!seen.has(`${[rCur, cCur-1]}`)){
+                    stack.push([rCur, cCur-1])
+                    seen.add(`${[rCur, cCur-1]}`)
+                }
+            }
+        }
+
+        // console.log(seen);
+        // console.log(replacers);
+        
+
+        // If no wall were affected, then the move was legal, apply every changes
+        if(!isWallAffected){
+            seen.forEach(s => {                
+                const [r, c] = s.split(",").map(Number)
+                matrix[r][c] = (replacers[s] || ".") // if there is no info on the replacer, it's "."
+            })
+        }
+        // console.table(matrix)
+    }
+
+    // console.table(matrix);
+    
+
+    // Calculate res
+    let res = 0
+    for(let row=0 ; row<maxRow ; row++){
+        for(let col=0 ; col<maxCol ; col++){
+            if(matrix[row][col] === "["){
+                res += row*100 + col
+            }
+        }
+    }
+
+    console.log(res)
+
+    return res
+}
 
 function deepCopyMatrix(matrix){
     const maxRow = matrix.length
