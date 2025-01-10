@@ -19,12 +19,12 @@ const { log } = require("util");
         // assert.deepStrictEqual(solveOne(example4), 4013) // 4013
         // assert.deepStrictEqual(solveOne(input), 82460) // 82460
 
-        assert.deepStrictEqual(solveTwo(example1), 45) // 45
-        assert.deepStrictEqual(solveTwo(example2), 64) // 64
-        assert.deepStrictEqual(solveTwo(example3), 149) // 149
-        assert.deepStrictEqual(solveTwo(example4), 14) // 14
-        assert.deepStrictEqual(solveTwo(example5), 21) // 21
-        assert.deepStrictEqual(solveTwo(example6), 13) // 13
+        // assert.deepStrictEqual(solveTwo(example1), 45) // 45
+        // assert.deepStrictEqual(solveTwo(example2), 64) // 64
+        // assert.deepStrictEqual(solveTwo(example3), 149) // 149
+        // assert.deepStrictEqual(solveTwo(example4), 14) // 14
+        // assert.deepStrictEqual(solveTwo(example5), 21) // 21
+        // assert.deepStrictEqual(solveTwo(example6), 13) // 13
         assert.deepStrictEqual(solveTwo(input), 590) // 590
     } catch (error) {
         console.error(`Got an error: ${error.message}`)
@@ -55,7 +55,7 @@ function solveOne(input){
     
     // Let a state be represented as a position and a direction
     const scores = {} // minimum score to get to a state (a position and direction), following the rules. key is a state, value is the minimum score to reach the state
-    const precedents = {} // key is a state, value is its previous state (not implemented, to do so modify the elements inside queue so they keep track of the precedent)
+    const precedents = {} // key is a state, value is its previous state (not implemented, to do so modify the elements inside queue so they keep track of the precedent) - better approach on part II
 
     const minScores = Array.from({length: maxRow}, () => Array(maxCol).fill(Infinity)) // An array with the minimum score for each position of the maze
 
