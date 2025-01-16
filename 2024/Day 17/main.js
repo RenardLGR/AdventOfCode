@@ -49,6 +49,7 @@ class Solution{
         return res.join(",")
     }
 
+    // Naive approach, try every value for register A. It works just fine for the example given but not for the input...
     runTwo(){
         const expectedRes = this.program
         const originalRegB = this.regB
@@ -81,15 +82,55 @@ class Solution{
                 this.instructIndex += 2
             }
 
-            if(tryRegA === 117440){
-                console.log(res.join(","))
-            }
             res = res.join(",")
             if(res === expectedRes.join(",")){
                 console.log(tryRegA)
                 return tryRegA
             }
 
+            tryRegA++
+        }
+    }
+
+    // Read part-2-read-me.txt for more details.
+    runTwoBis(){
+        let tryRegA = 1
+        let outputIndex = this.program.length - 1
+
+        // Find the value of regA that outputted the last digits of the program, until regA outputs every digits of the program.
+        while(true){
+            // Run the program with the attempted regA
+            this.regA = tryRegA
+            this.instructIndex = 0
+        
+            let res = []
+            while(this.instructIndex < this.program.length){
+                const opcode = this.program[this.instructIndex];
+                const operand = this.program[this.instructIndex+1];
+                const returned = this.instructions[opcode].call(this, operand); // Somehow the binding of this to the class instance is lost???
+    
+                // Expect a value from opcode 3 and opcode 5
+                // opcode 3 changes the index of the instruction pointer if the returned value is true
+                if(opcode === 3 && returned) continue
+                // opcode 5 adds to the result
+                if(opcode === 5) res.push(returned)
+    
+                this.instructIndex += 2
+            }
+
+            res = res.join(",")
+            if(res === this.program.join(",")){
+                console.log(tryRegA)
+                return tryRegA
+            }
+
+            // We found the value of regA able to produce the last digits we were focused on, onto the previous output digit
+            if(res === this.program.slice(outputIndex).join(",")){
+                // Onto the previous output digit
+                tryRegA *= 8
+                outputIndex--
+                continue
+            }
             tryRegA++
         }
     }
@@ -129,7 +170,7 @@ class Solution{
     // opcode 2
     bst(oper){
         let combo = this.getComboValue(oper)
-        this.regB = combo % 8
+        this.regB = ((combo % 8) + 8) % 8
     }
 
     // opcode 3
@@ -146,7 +187,7 @@ class Solution{
 
     // opcode 5
     out(oper){
-        return this.getComboValue(oper) % 8
+        return ((this.getComboValue(oper) % 8) + 8) % 8
     }
 
     // opcode 6
@@ -169,7 +210,7 @@ const fs = require("fs");
 const assert = require("assert");
 
 (() => {
-    // try {
+    try {
         const example = fs.readFileSync(__dirname + "/example.txt").toString()
         const example1 = fs.readFileSync(__dirname + "/example1.txt").toString()
         const example2 = fs.readFileSync(__dirname + "/example2.txt").toString()
@@ -188,8 +229,9 @@ const assert = require("assert");
         // assert.deepStrictEqual(solutionInput.runOne(), "1,7,2,1,4,1,5,4,0") // "1,7,2,1,4,1,5,4,0"
 
         // assert.deepStrictEqual(solutionExamplePartII.runTwo(), 117440) // 117440
-        assert.deepStrictEqual(solutionInput.runTwo(), 117440) // 117440
-    // } catch (error) {
-    //     console.error(`Got an error: ${error.message}`)
-    // }
+        // assert.deepStrictEqual(solutionExamplePartII.runTwoBis(), 117440) // 117440
+        assert.deepStrictEqual(solutionInput.runTwoBis(), 37221261688308) // 37221261688308
+    } catch (error) {
+        console.error(`Got an error: ${error.message}`)
+    }
 })()

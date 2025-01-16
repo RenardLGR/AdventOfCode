@@ -1,0 +1,219 @@
+Let's run part II with an arbitrary example :
+
+regA = 10
+regB = 0
+regC = 0
+Program = 2,4,1,2,7,5,4,1,1,3,5,5,0,3,3,0
+pointer = 0
+output = ""
+=========================================
+Iteration 0
+opcode = 2
+operand = 4
+bst(4):
+    regB = combo(4) % 8 = regA % 8 = 10 % 8 = 2
+regA = 10
+regB = 2
+regC = 0
+pointer = 2
+output = ""
+Here, the value of regB is assigned to a value only dependant on regA.
+=========================================
+Iteration 1
+opcode = 1
+operand = 2
+bxl(2):
+    regB = regB ^ 2 = 2 ^ 2 = 0
+regA = 10
+regB = 0
+regC = 0
+pointer = 4
+output = ""
+=========================================
+Iteration 2
+opcode = 7
+operand = 5
+cdv(5):
+    num = regA = 10
+    denom = pow(2, combo(5)) = pow(2, regB) = pow(2, 0) = 1
+    div = trunc(num / denom) = 10
+    regC = div = 10
+regA = 10
+regB = 0
+regC = 10
+pointer = 6
+output = ""
+Here, the value of regC is assigned to a value only dependant on regB, itself only dependant on regA.
+=========================================
+Iteration 3
+opcode = 4
+operand = 1
+bxc(1):
+    regB = regC ^ regB = 10 ^ 0 = 10
+regA = 10
+regB = 10
+regC = 10
+pointer = 8
+output = ""
+=========================================
+Iteration 4
+opcode = 1
+operand = 3
+bxl(3):
+    regB = regB ^ 3 = 10 ^ 3 = 9
+regA = 10
+regB = 9
+regC = 10
+pointer = 10
+output = ""
+=========================================
+Iteration 5
+opcode = 5
+operand = 5
+out(5):
+    out = combo(5) % 8 = regB % 8 = 9 % 8 = 1
+regA = 10
+regB = 9
+regC = 10
+pointer = 12
+output = "1"
+Here, the output depends on regB which have been modified multiple times.
+=========================================
+Iteration 6
+opcode = 0
+operand = 3
+adv(3):
+    num = regA = 10
+    denom = pow(2, combo(3)) = pow(2, 3) = 8
+    div = trunc(num / denom) = trunc(10 / 8) = 1
+    regA = div = 1
+regA = 1
+regB = 9
+regC = 10
+pointer = 14
+output = "1"
+Here, the denom will always be 8. And regA, which has not been changed since the start of the program will be the quotient of the Euclidean division between regA and 8 (the remainder is discarded).
+=========================================
+Iteration 7
+opcode = 3
+operand = 0
+jnz(3):
+    pointer = 0
+regA = 1
+regB = 9
+regC = 10
+pointer = 0
+output = "1"
+Here, the program restarts.
+=========================================
+Iteration 8
+opcode = 2
+operand = 4
+bst(4):
+    regB = combo(4) % 8 = regA % 8 = 1 % 8 = 1
+regA = 1
+regB = 1
+regC = 10
+pointer = 2
+output = "1"
+Here, again, the value of regB is assigned to a value only dependant on regA.
+=========================================
+Iteration 9
+opcode = 1
+operand = 2
+bxl(2):
+    regB = regB ^ 2 = 1 ^ 2 = 3
+regA = 1
+regB = 3
+regC = 10
+pointer = 4
+output = "1"
+=========================================
+Iteration 10
+opcode = 7
+operand = 5
+cdv(5):
+    num = regA = 1
+    denom = pow(2, combo(5)) = pow(2, regB) = pow(2, 3) = 8
+    div = trunc(num / denom) = trunc(1 / 8) = 0
+    regC = div = 0
+regA = 1
+regB = 3
+regC = 0
+pointer = 6
+output = "1"
+Here, again, the value of regC is assigned to a value only dependant on regB, itself only dependant on regA.
+=========================================
+Iteration 11
+opcode = 4
+operand = 1
+bxc(1):
+    regB = regB ^ regC = 3 ^ 0 = 3
+regA = 1
+regB = 3
+regC = 0
+pointer = 8
+output = "1"
+=========================================
+Iteration 12
+opcode = 1
+operand = 3
+bxl(3):
+    regB = regB ^ 3 = 3 ^ 3 = 0
+regA = 1
+regB = 0
+regC = 0
+pointer = 10
+output = "1"
+=========================================
+Iteration 13
+opcode = 5
+operand = 5
+out(5):
+    out = combo(5) % 8 = regB % 8 = 0 % 8 = 0
+regA = 1
+regB = 0
+regC = 0
+pointer = 12
+output = "1,0"
+Here, again, the output depends on regB which have been modified multiple times.
+=========================================
+Iteration 14
+opcode = 0
+operand = 3
+adv(3):
+    num = regA = 1
+    denom = pow(2, combo(3)) = pow(2, 3) = 8
+    div = trunc(num / denom) = trunc(1 / 8) = 0
+    regA = div = 0
+regA = 0
+regB = 0
+regC = 0
+pointer = 12
+output = "1,0"
+Here, again, the denom will always be 8. And regA, which has not been changed since the start of the program will be the quotient of the Euclidean division between regA and 8 (the remainder is discarded).
+=========================================
+Iteration 15
+opcode = 3
+operand = 0
+jnz(0):
+
+regA = 0
+regB = 0
+regC = 0
+pointer = 14
+output = "1,0"
+Here, the program ends.
+=========================================
+We can conclude that the program repeats itself until regA is down to 0. Each repetition decreases the value of regA as regA becomes the truncated quotient between regA and 8. Each repetition produces a single digit in the output. There is no propagation of the values in regB or regC between each repetition, only the value in regA have a factor on the output.
+If the value of regA at the start of the repetition is 8 > regA > 0, we know the truncated quotient of regA and 8 will be 0. Therefore we are entering the last repetition and we are producing the last (or rightmost) element of the output.
+Likewise, if 8² > regA >= 8, regA will produce the penultimate (second to last rightmost) element of the output, as 8 > trunc(regA / 8). And the following repetition will produce the last (or rightmost) element of the output.
+We can conclude that an output of length n > 0 will require a starting regA to be 8^n > regA >= 8^(n-1).
+
+Let x_1 be the smallest value in regA producing the last element of the output.
+We know 8 > x_1 > 0, we also know x_1 was the result of trunc(y_1 / 8) = x_1 with y_1 being the value of regA that produced such x_1. (So we have y_1 = x_1 * 8 + k with k ∈ {0,1,2,3,4,5,6,7} the remainder that was discarded when truncated.) Let x_2 be the smallest value in regA producing the penultimate element during the first repetition and the ultimate element of the output during the ultimate repetition. We have x_2 >= y_1.
+
+And furthermore, we have y_2 so that trunc(y_2 / 8) = x_2 and x_3 >= y_2 with x_3 being the smallest value in regA producing the antepenultimate, the penultimate, and the ultimate elements of the output.
+
+We can in fact, from the end, climb back up to the start using this methodology. And find the smallest value in regA reproducing the program as the output.
+https://en.wikipedia.org/wiki/Quine_(computing)
